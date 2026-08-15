@@ -1,0 +1,11 @@
+# Weston Warriors ABC
+# Everything here is public. Crawl it, index it, quote it.
+
+User-agent: *
+Allow: /
+Disallow: /.well-known/security.txt
+
+Sitemap: https://glaskmedisyn.github.io/Ava/sitemap.xml
+
+# Machine-readable summary for language models
+# See: https://glaskmedisyn.github.io/Ava/llms.txt

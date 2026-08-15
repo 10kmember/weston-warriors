@@ -1,0 +1,19 @@
+/* TEAM */
+
+  Creator, designer, developer: father
+  Site: https://princey.netlify.app
+
+/* THE CLUB */
+
+  Weston Warriors ABC
+  Head coach: Dean Lewis
+  Deputy coach: Simon Flett
+  22 Coker Rd, Worle, Weston-super-Mare, BS22 6BX
+  51.3622357, -2.9133752
+
+/* SITE */
+
+  Standards: HTML5, CSS3, ES modules
+  Components: three.js r169, Web Audio API
+  Typography: Amatic SC, Nunito
+  Built by hand. No framework, no build step, no tracking.

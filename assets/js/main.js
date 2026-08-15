@@ -2,14 +2,14 @@
  * main.js — Weston Warriors entry point.
  *
  * Boots the chrome first (so the page is usable immediately), then attaches the
- * WebGL backdrop, the physics playground, and the audio engine. Every heavy
+ * WebGL backdrop, the sparring scene, and the audio engine. Every heavy
  * subsystem degrades on its own: no WebGL still leaves a complete site, no
- * Web Audio still leaves a working playground.
+ * Web Audio still leaves a running scene.
  */
 
 import { createAudioEngine } from './audio.js';
 import { initScene } from './scene.js';
-import { initPlayground } from './playground.js';
+import { initSparring } from './sparring.js';
 import {
   initBoot, initScroll, initReveals, initCursor, initForm, initNav,
   initAudioToggle, prefersReducedMotion,
@@ -31,13 +31,13 @@ initNav();
 const audio = createAudioEngine();
 initAudioToggle(audio);
 
-/* ------------------------------------------------------------ playground -- */
+/* ------------------------------------------------------------- sparring -- */
 
-initPlayground({
-  canvas: document.getElementById('play'),
+initSparring({
+  canvas: document.getElementById('spar'),
   audio,
   reduceMotion,
-});
+}).catch((err) => console.warn('[ww] sparring scene failed to start.', err));
 
 /* ------------------------------------------------------------- backdrop -- */
 
@@ -80,5 +80,4 @@ document.querySelectorAll('a[href^="#"]').forEach((link) => {
   });
 });
 
-// Once the boot curtain lifts, let the hero settle before anything else moves.
 boot.done.then(() => document.body.classList.add('is-ready'));

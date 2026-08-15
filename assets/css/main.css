@@ -159,7 +159,14 @@ button { font: inherit; color: inherit; }
   border-bottom: 1px solid var(--hair);
 }
 .nav__brand { display: flex; align-items: center; gap: .7rem; }
-.nav__mark svg { fill: none; stroke: var(--ember); stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
+.nav__mark { flex: 0 0 auto; line-height: 0; }
+/* the viewBox is 44 wide so both Ws close; overflow visible keeps the stroke
+   caps from being clipped at the edges */
+.nav__mark svg {
+  overflow: visible;
+  fill: none; stroke: var(--ember); stroke-width: 2.4;
+  stroke-linejoin: round; stroke-linecap: round;
+}
 .nav__name {
   font-family: var(--display);
   font-size: 1.55rem; line-height: .78; letter-spacing: .03em;
@@ -556,54 +563,126 @@ button { font: inherit; color: inherit; }
 }
 .tenet p { margin: 0; color: var(--bone-dim); max-width: 46ch; }
 
-/* ------------------------------------------------------------ playground */
-.play {
+/* -------------------------------------------------------------- sparring */
+.spar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 19rem);
   gap: 1px;
   background: var(--hair);
   border: 1px solid var(--hair);
 }
-.play__frame { position: relative; background: var(--ink); min-height: 26rem; }
-.play__canvas {
+.spar__frame { position: relative; background: var(--ink); min-height: 26rem; }
+.spar__canvas {
   width: 100%;
-  height: clamp(26rem, 62vh, 40rem);
-  touch-action: none;
-  cursor: grab;
+  height: clamp(26rem, 64vh, 42rem);
+  touch-action: manipulation;
+  cursor: crosshair;
   background: transparent;
 }
-.play__canvas:active { cursor: grabbing; }
-.play__hint {
+.spar__hint {
   position: absolute; left: 50%; bottom: 1rem; transform: translateX(-50%);
   color: var(--bone-faint); font-size: .58rem; white-space: nowrap;
   pointer-events: none;
   transition: opacity .5s var(--ease);
 }
-.play__hint b { color: var(--ember); }
-.play__hint.is-hidden { opacity: 0; }
-.play__corner {
+.spar__hint.is-hidden { opacity: 0; }
+/* say "tap" on touch devices and "click" everywhere else */
+.hint--coarse { display: none; }
+@media (hover: none), (pointer: coarse) {
+  .hint--fine { display: none; }
+  .hint--coarse { display: inline; }
+}
+.spar__corner {
   position: absolute; top: .9rem; color: var(--bone-faint); font-size: .56rem;
   pointer-events: none;
 }
-.play__corner--tl { left: 1rem; color: var(--bronze); }
-.play__corner--tr { right: 1rem; }
+.spar__corner--tl { left: 1rem; color: var(--bronze); }
+.spar__corner--tr { right: 1rem; font-variant-numeric: tabular-nums; }
 
-.play__panel {
+.spar__panel {
   background: var(--ink);
   padding: clamp(1.2rem, 2.4vw, 1.8rem);
-  display: flex; flex-direction: column; gap: 1.4rem;
+  display: flex; flex-direction: column; gap: 1.2rem;
 }
-.play__readouts { display: grid; gap: .1rem; }
+.fcard { border-top: 1px solid var(--hair); padding-top: .9rem; }
+.fcard__tag { display: flex; align-items: center; gap: .5rem; color: var(--bone-faint); }
+.fcard__dot {
+  width: .55rem; height: .55rem; border-radius: 50%;
+  background: #6B7684; box-shadow: 0 0 10px rgba(107, 118, 132, .8);
+}
+.fcard--b .fcard__dot { background: #E2C6A0; box-shadow: 0 0 10px rgba(226, 198, 160, .7); }
+.fcard__style {
+  margin: .3rem 0 .25rem;
+  font-family: var(--display); font-weight: 700;
+  font-size: clamp(2rem, 3.4vw, 2.6rem); line-height: .86;
+  text-transform: uppercase;
+}
+.fcard__note { color: var(--bone-faint); font-size: .54rem; line-height: 1.8; margin: 0 0 .5rem; }
+.fcard__stats { display: grid; gap: 0; }
+
 .readout {
   display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
-  padding: .55rem 0;
+  padding: .45rem 0;
   border-bottom: 1px solid var(--hair);
 }
 .readout__k { color: var(--bronze); font-size: .58rem; }
 .readout__v { color: var(--bone); font-size: .82rem; font-variant-numeric: tabular-nums; }
-.play__controls { display: grid; gap: .5rem; }
-.play__controls .btn[aria-pressed="true"] { color: var(--ember); border-color: var(--hair-warm); }
-.play__note { color: var(--bone-faint); font-size: .54rem; line-height: 1.9; letter-spacing: .1em; margin: 0; }
+.spar__note { color: var(--bone-faint); font-size: .54rem; line-height: 1.9; letter-spacing: .1em; margin: 0; }
+
+/* ---------------------------------------------------------- the corner   */
+.corner {
+  border: 1px solid var(--hair);
+  padding: clamp(1.4rem, 3vw, 2.2rem);
+  margin-bottom: clamp(2.5rem, 6vh, 4rem);
+}
+.corner__label { color: var(--bone-faint); margin-bottom: 1.6rem; }
+.corner__grid {
+  display: grid; gap: clamp(1.5rem, 4vw, 3rem);
+  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+}
+.coach__role { color: var(--bronze); margin-bottom: .5rem; }
+.coach__name {
+  margin: 0 0 .5rem;
+  font-family: var(--display); font-weight: 700;
+  font-size: clamp(2.4rem, 4vw, 3.2rem); line-height: .86;
+  text-transform: uppercase;
+}
+.coach p { color: var(--bone-dim); font-size: .95rem; max-width: 42ch; }
+
+/* ------------------------------------------------------------ star card  */
+.star {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 1px;
+  background: var(--hair);
+  border: 1px solid var(--hair);
+  box-shadow: inset 0 2px 0 var(--ember);
+  margin-bottom: clamp(2rem, 5vh, 3rem);
+}
+.star__body, .star__stats {
+  background: var(--ink-2);
+  padding: clamp(1.6rem, 3vw, 2.4rem);
+}
+.star__tag { color: var(--ember); margin-bottom: 1.2rem; }
+.star__name {
+  margin: 0 0 .35rem;
+  font-family: var(--display); font-weight: 700;
+  font-size: clamp(3rem, 6vw, 5rem); line-height: .82;
+  text-transform: uppercase;
+}
+.star__alias { color: var(--bone-faint); margin-bottom: 1.2rem; }
+.star__copy { color: var(--bone-dim); max-width: 52ch; margin: 0; }
+.star__stats {
+  display: grid; gap: 0; align-content: start;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.star__stats > div {
+  padding: .8rem 0;
+  border-bottom: 1px solid var(--hair);
+}
+.star__stats dt { color: var(--bronze); font-size: .55rem; }
+.star__stats dd { margin: .3rem 0 0; color: var(--bone-dim); font-size: .78rem; }
+.star__stats dd b { color: var(--bone); font-size: 1.35em; font-weight: 700; }
 
 /* ----------------------------------------------------------------- tiers */
 .tiers {
@@ -749,6 +828,14 @@ button { font: inherit; color: inherit; }
   border-top: 1px solid var(--hair);
   color: var(--bone-faint); font-size: .56rem;
 }
+.foot__credit a {
+  position: relative;
+  color: var(--ember);
+  padding-bottom: 1px;
+  border-bottom: 1px solid var(--hair-warm);
+  transition: color .3s var(--ease), border-color .3s var(--ease);
+}
+.foot__credit a:hover { color: var(--bone); border-color: var(--bone); }
 
 /* ---------------------------------------------------------------- cursor */
 .cursor {
@@ -779,8 +866,8 @@ button { font: inherit; color: inherit; }
 
 /* ------------------------------------------------------------ responsive */
 @media (max-width: 980px) {
-  .play { grid-template-columns: 1fr; }
-  .play__controls { grid-template-columns: repeat(2, 1fr); }
+  .spar { grid-template-columns: 1fr; }
+  .star { grid-template-columns: 1fr; }
 }
 @media (max-width: 820px) {
   /* the links become a full-bleed panel behind the burger */
@@ -818,8 +905,8 @@ button { font: inherit; color: inherit; }
   .hero__foot { flex-direction: column; align-items: flex-start; gap: .5rem; }
 }
 @media (max-width: 520px) {
-  .play__controls { grid-template-columns: 1fr; }
-  .play__hint { font-size: .5rem; }
+  .spar__hint { font-size: .5rem; }
+  .star__stats { grid-template-columns: 1fr; }
   .stage__scan { display: none; }
 }
 
