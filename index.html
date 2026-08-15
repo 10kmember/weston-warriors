@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Weston Warriors — Untamed Grit to Tamed Mastery</title>
+<meta name="description" content="Weston Warriors is an elite boxing sanctuary. Six rings, 12,400 square feet of floor, and a code forged between untamed grit and tamed mastery." />
+<meta name="theme-color" content="#0A0A0A" />
+
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Weston Warriors — Untamed Grit to Tamed Mastery" />
+<meta property="og:description" content="An elite boxing sanctuary. Six rings. One code." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Nunito:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/main.css" />
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230A0A0A'/%3E%3Cpath d='M4 8l4 16 4-11 4 11 4-16' stroke='%23FF5500' stroke-width='2.5' fill='none' stroke-linejoin='round'/%3E%3C/svg%3E" />
+
+<!-- three.js r169 is vendored so the site is self-contained and works offline.
+     Swap the value for a CDN URL if you would rather serve it externally. -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "./assets/vendor/three.module.js"
+  }
+}
+</script>
+</head>
+<body>
+
+<a class="skip-link" href="#arena">Skip to content</a>
+
+<!-- ─────────────────────────────  BOOT  ───────────────────────────── -->
+<div class="boot" id="boot" aria-hidden="true">
+  <div class="boot__inner">
+    <div class="boot__mark">WW</div>
+    <div class="boot__bar"><span id="boot-fill"></span></div>
+    <p class="mono boot__status" id="boot-status">CALIBRATING ARENA…</p>
+  </div>
+</div>
+
+<!-- ────────────────────────────  BACKDROP  ────────────────────────── -->
+<div class="stage" aria-hidden="true">
+  <canvas id="gl"></canvas>
+  <div class="stage__vignette"></div>
+  <div class="stage__grain"></div>
+  <div class="stage__scan"></div>
+</div>
+
+<!-- ──────────────────────────────  NAV  ───────────────────────────── -->
+<header class="nav" id="nav">
+  <a class="nav__brand" href="#top">
+    <span class="nav__mark" aria-hidden="true">
+      <svg viewBox="0 0 40 24" width="40" height="24" focusable="false"><path d="M2 3l5 18 5-12 5 12 5-18M25 3l5 18 5-12" /></svg>
+    </span>
+    <span class="nav__name">Weston<br />Warriors</span>
+  </a>
+
+  <nav class="nav__links" id="nav-links" aria-label="Sections">
+    <a href="#arena" data-nav="arena"><i class="mono">01</i> The Arena</a>
+    <a href="#triumphs" data-nav="triumphs"><i class="mono">02</i> Triumphs</a>
+    <a href="#code" data-nav="code"><i class="mono">03</i> The Code</a>
+    <a href="#ground" data-nav="ground"><i class="mono">04</i> Proving Ground</a>
+    <a href="#summons" data-nav="summons"><i class="mono">05</i> Summons</a>
+  </nav>
+
+  <div class="nav__tools">
+    <button class="audio-toggle" id="audio-toggle" type="button" aria-pressed="false"
+            aria-label="Toggle sound">
+      <span class="audio-toggle__bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span class="mono audio-toggle__label">SND</span>
+    </button>
+
+    <button class="nav__burger" id="nav-toggle" type="button"
+            aria-expanded="false" aria-controls="nav-links" aria-label="Open menu">
+      <span aria-hidden="true"></span><span aria-hidden="true"></span>
+    </button>
+  </div>
+</header>
+
+<div class="progress" aria-hidden="true"><span id="progress-fill"></span></div>
+
+<!-- ─────────────────────────────  RAILS  ──────────────────────────── -->
+<div class="rail rail--l mono" aria-hidden="true">
+  <span>WESTON WARRIORS</span><span class="rail__dot">/</span><span>EST. 2011</span>
+</div>
+<div class="rail rail--r mono" aria-hidden="true">
+  <span id="rail-progress">000</span><span class="rail__dot">/</span><span>100</span>
+</div>
+
+<main id="top">
+
+  <!-- ═══════════════════════════  HERO  ══════════════════════════ -->
+  <section class="hero" id="hero">
+    <div class="hero__hud mono" aria-hidden="true">
+      <div class="hud__block">
+        <span class="hud__k">LAT</span><span class="hud__v">51.3458° N</span>
+      </div>
+      <div class="hud__block">
+        <span class="hud__k">LON</span><span class="hud__v">2.9773° W</span>
+      </div>
+      <div class="hud__block">
+        <span class="hud__k">STATE</span><span class="hud__v hud__v--live">DOORS OPEN</span>
+      </div>
+    </div>
+
+    <div class="hero__core">
+      <p class="eyebrow mono">EST. 2011 &nbsp;//&nbsp; WESTON-SUPER-MARE &nbsp;//&nbsp; BOXING SANCTUARY</p>
+      <h1 class="hero__title">
+        <span class="hero__line" data-depth="0.10">Untamed Grit</span>
+        <span class="hero__line hero__line--em" data-depth="0.20">to</span>
+        <span class="hero__line" data-depth="0.32">Tamed Mastery</span>
+      </h1>
+      <p class="hero__lede">
+        Six rings. Twelve thousand square feet of unforgiving floor. A room built
+        for people who would rather be measured than admired.
+      </p>
+      <div class="hero__cta">
+        <a class="btn btn--solid" href="#summons">Request Entry</a>
+        <a class="btn btn--ghost" href="#ground">Enter the Playground</a>
+      </div>
+    </div>
+
+    <div class="hero__foot mono" aria-hidden="true">
+      <span class="hero__scroll">SCROLL <b>↓</b></span>
+      <span id="hero-readout">RENDER · PARTICLE FIELD · 12,000 NODES</span>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════  TICKER  ═════════════════════════ -->
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker__track">
+      <span>UNTAMED GRIT</span><b>◆</b><span>TAMED MASTERY</span><b>◆</b>
+      <span>NO SHORTCUTS</span><b>◆</b><span>SIX RINGS</span><b>◆</b>
+      <span>ONE CODE</span><b>◆</b>
+      <span>UNTAMED GRIT</span><b>◆</b><span>TAMED MASTERY</span><b>◆</b>
+      <span>NO SHORTCUTS</span><b>◆</b><span>SIX RINGS</span><b>◆</b>
+      <span>ONE CODE</span><b>◆</b>
+    </div>
+  </div>
+
+  <!-- ═════════════════════════  01 ARENA  ════════════════════════ -->
+  <section class="sec" id="arena" data-section="arena">
+    <header class="sec__head reveal">
+      <p class="sec__index mono"><b>01</b> <s>//</s> THE ARENA</p>
+      <h2 class="sec__title">A Sanctuary<br />Carved for Fighters</h2>
+      <p class="sec__lede">
+        The building is Victorian brick and modern steel, and it makes no attempt
+        to reconcile the two. Sunlight falls through the clerestory onto a floor
+        that has been resurfaced four times. Nothing here is decorative.
+      </p>
+    </header>
+
+    <div class="metrics reveal">
+      <div class="metric">
+        <span class="metric__val" data-count="12400" data-format="comma">0</span>
+        <span class="metric__unit mono">SQ FT</span>
+        <span class="metric__key mono">TRAINING FLOOR</span>
+      </div>
+      <div class="metric">
+        <span class="metric__val" data-count="6">0</span>
+        <span class="metric__unit mono">RINGS</span>
+        <span class="metric__key mono">FOUR COMPETITION · TWO SPARRING</span>
+      </div>
+      <div class="metric">
+        <span class="metric__val" data-count="18">0</span>
+        <span class="metric__unit mono">HRS/DAY</span>
+        <span class="metric__key mono">04:30 — 22:30 · SEVEN DAYS</span>
+      </div>
+      <div class="metric">
+        <span class="metric__val" data-count="164">0</span>
+        <span class="metric__unit mono">/ 180</span>
+        <span class="metric__key mono">MEMBER CEILING</span>
+        <span class="bar" role="img" aria-label="164 of 180 places filled">
+          <b style="--fill:91%"></b>
+        </span>
+      </div>
+    </div>
+
+    <div class="cards reveal">
+      <article class="card">
+        <p class="card__tag mono">FLOOR 01</p>
+        <h3 class="card__title">The Pit</h3>
+        <p>
+          Sunken conditioning floor. Sled tracks, rope, and a bell that ends every
+          round whether or not you are finished. Heat is not regulated here.
+        </p>
+        <dl class="card__spec mono">
+          <div><dt>AREA</dt><dd>3,100 SQ FT</dd></div>
+          <div><dt>CAPACITY</dt><dd>24</dd></div>
+        </dl>
+      </article>
+      <article class="card">
+        <p class="card__tag mono">FLOOR 02</p>
+        <h3 class="card__title">The Forge</h3>
+        <p>
+          Four competition rings under 6,000K light, ringed by a mezzanine so that
+          every round is watched. Rope tension is checked each morning at 04:30.
+        </p>
+        <dl class="card__spec mono">
+          <div><dt>RINGS</dt><dd>4 × 20FT</dd></div>
+          <div><dt>ROPE TENSION</dt><dd>640 N</dd></div>
+        </dl>
+      </article>
+      <article class="card">
+        <p class="card__tag mono">FLOOR 03</p>
+        <h3 class="card__title">The Cold Room</h3>
+        <p>
+          Recovery, physiotherapy, and the only quiet in the building. Plunge held
+          at 4°C. Coaches enforce the silence more strictly than the temperature.
+        </p>
+        <dl class="card__spec mono">
+          <div><dt>PLUNGE</dt><dd>4.0 °C</dd></div>
+          <div><dt>BEDS</dt><dd>6</dd></div>
+        </dl>
+      </article>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════  02 TRIUMPHS  ═══════════════════════ -->
+  <section class="sec sec--alt" id="triumphs" data-section="triumphs">
+    <header class="sec__head reveal">
+      <p class="sec__index mono"><b>02</b> <s>//</s> TRIUMPHS</p>
+      <h2 class="sec__title">The Record,<br />Without Ornament</h2>
+      <p class="sec__lede">
+        Fourteen years of sanctioned results. We publish the losses at the same
+        size as the wins, because the room is judged on both.
+      </p>
+    </header>
+
+    <div class="metrics metrics--tight reveal">
+      <div class="metric">
+        <span class="metric__val" data-count="214">0</span>
+        <span class="metric__unit mono">BOUTS</span>
+        <span class="metric__key mono">SANCTIONED SINCE 2011</span>
+      </div>
+      <div class="metric">
+        <span class="metric__val" data-count="87">0</span>
+        <span class="metric__unit mono">%</span>
+        <span class="metric__key mono">WIN RATE</span>
+      </div>
+      <div class="metric">
+        <span class="metric__val" data-count="41">0</span>
+        <span class="metric__unit mono">KO / TKO</span>
+        <span class="metric__key mono">INSIDE THE DISTANCE</span>
+      </div>
+      <div class="metric">
+        <span class="metric__val" data-count="9">0</span>
+        <span class="metric__unit mono">TITLES</span>
+        <span class="metric__key mono">NATIONAL & REGIONAL</span>
+      </div>
+    </div>
+
+    <div class="roster reveal">
+      <div class="roster__head mono">
+        <span>FIGHTER</span><span>DIVISION</span><span>RECORD</span><span>HONOURS</span>
+      </div>
+
+      <article class="roster__row">
+        <h3 class="roster__name">Marisol Vega</h3>
+        <p class="mono roster__div">SUPER-FEATHER</p>
+        <p class="mono roster__rec"><b>22</b>–2–0 <s>·</s> 14 KO</p>
+        <p class="mono roster__hon">NATIONAL TITLE ’23 · ’25</p>
+        <span class="roster__bar"><b style="--fill:92%"></b></span>
+      </article>
+
+      <article class="roster__row">
+        <h3 class="roster__name">Idris Kane</h3>
+        <p class="mono roster__div">LIGHT-HEAVY</p>
+        <p class="mono roster__rec"><b>17</b>–4–1 <s>·</s> 11 KO</p>
+        <p class="mono roster__hon">REGIONAL TITLE ’24</p>
+        <span class="roster__bar"><b style="--fill:77%"></b></span>
+      </article>
+
+      <article class="roster__row">
+        <h3 class="roster__name">Thea Okonkwo</h3>
+        <p class="mono roster__div">MIDDLEWEIGHT</p>
+        <p class="mono roster__rec"><b>15</b>–1–0 <s>·</s> 9 KO</p>
+        <p class="mono roster__hon">UNDEFEATED AT HOME</p>
+        <span class="roster__bar"><b style="--fill:94%"></b></span>
+      </article>
+
+      <article class="roster__row">
+        <h3 class="roster__name">Callum Reyes</h3>
+        <p class="mono roster__div">WELTERWEIGHT</p>
+        <p class="mono roster__rec"><b>11</b>–3–2 <s>·</s> 4 KO</p>
+        <p class="mono roster__hon">NATIONAL SEMI-FINAL ’25</p>
+        <span class="roster__bar"><b style="--fill:69%"></b></span>
+      </article>
+    </div>
+
+    <div class="intensity reveal">
+      <p class="intensity__label mono">TRAINING LOAD <s>//</s> ROLLING 7-DAY MEAN</p>
+      <div class="intensity__chart" role="img"
+           aria-label="Weekly training load: Monday 72, Tuesday 88, Wednesday 61, Thursday 94, Friday 80, Saturday 100, Sunday 34 percent of peak.">
+        <div class="intensity__col" style="--h:72%"><span class="mono">MON</span></div>
+        <div class="intensity__col" style="--h:88%"><span class="mono">TUE</span></div>
+        <div class="intensity__col" style="--h:61%"><span class="mono">WED</span></div>
+        <div class="intensity__col" style="--h:94%"><span class="mono">THU</span></div>
+        <div class="intensity__col" style="--h:80%"><span class="mono">FRI</span></div>
+        <div class="intensity__col intensity__col--peak" style="--h:100%"><span class="mono">SAT</span></div>
+        <div class="intensity__col" style="--h:34%"><span class="mono">SUN</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════  03 THE CODE  ══════════════════════ -->
+  <section class="sec" id="code" data-section="code">
+    <header class="sec__head reveal">
+      <p class="sec__index mono"><b>03</b> <s>//</s> THE CODE</p>
+      <h2 class="sec__title">Five Lines,<br />Painted on the Wall</h2>
+      <p class="sec__lede">
+        Every member is read these once, on the first night, and never again.
+        After that they are assumed.
+      </p>
+    </header>
+
+    <ol class="tenets reveal">
+      <li class="tenet">
+        <span class="tenet__num mono">I</span>
+        <h3 class="tenet__title">Arrive Before You Are Ready</h3>
+        <p>Motivation is weather. Attendance is architecture. The door opens at 04:30 and does not wait.</p>
+      </li>
+      <li class="tenet">
+        <span class="tenet__num mono">II</span>
+        <h3 class="tenet__title">Grit Is Raw Material</h3>
+        <p>Rage wins nothing on its own. It is ore. The work of this room is to smelt it into technique.</p>
+      </li>
+      <li class="tenet">
+        <span class="tenet__num mono">III</span>
+        <h3 class="tenet__title">Control the Distance</h3>
+        <p>Every fight is a negotiation over one measurement. Whoever owns it rarely has to be brave.</p>
+      </li>
+      <li class="tenet">
+        <span class="tenet__num mono">IV</span>
+        <h3 class="tenet__title">Respect the Loser</h3>
+        <p>They came. Half the city did not. When the bell goes, the opponent becomes a colleague again.</p>
+      </li>
+      <li class="tenet">
+        <span class="tenet__num mono">V</span>
+        <h3 class="tenet__title">Leave the Floor Clean</h3>
+        <p>Wraps binned, ropes wiped, bags stilled. The room is inherited every morning by someone else.</p>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ═════════════════  04 THE PROVING GROUND  ═══════════════════ -->
+  <section class="sec sec--alt" id="ground" data-section="ground">
+    <header class="sec__head reveal">
+      <p class="sec__index mono"><b>04</b> <s>//</s> THE PROVING GROUND</p>
+      <h2 class="sec__title">Put Your Hands<br />On Something</h2>
+      <p class="sec__lede">
+        A live physics floor. Drag the equipment, throw it, and listen — every
+        impact is synthesised in the browser from the force of the collision and
+        panned to where it happened.
+      </p>
+    </header>
+
+    <div class="play reveal">
+      <div class="play__frame">
+        <canvas id="play" class="play__canvas" role="application"
+                tabindex="0"
+                aria-label="Interactive physics playground. Drag and throw boxing equipment. Press S for a shockwave, R to reset, G to toggle gravity."></canvas>
+
+        <div class="play__hint mono" id="play-hint">
+          <b>DRAG</b> TO GRAB <s>·</s> <b>RELEASE</b> TO THROW <s>·</s> <b>CLICK FLOOR</b> FOR SHOCKWAVE
+        </div>
+
+        <div class="play__corner play__corner--tl mono">04 // PROVING GROUND</div>
+        <div class="play__corner play__corner--tr mono" id="play-fps">-- FPS</div>
+      </div>
+
+      <div class="play__panel">
+        <div class="play__readouts mono">
+          <div class="readout">
+            <span class="readout__k">OBJECTS</span><span class="readout__v" id="rd-bodies">0</span>
+          </div>
+          <div class="readout">
+            <span class="readout__k">IMPACTS</span><span class="readout__v" id="rd-impacts">0</span>
+          </div>
+          <div class="readout">
+            <span class="readout__k">PEAK IMPULSE</span><span class="readout__v" id="rd-peak">0.00</span>
+          </div>
+          <div class="readout">
+            <span class="readout__k">GRAVITY</span><span class="readout__v" id="rd-gravity">1.00 G</span>
+          </div>
+        </div>
+
+        <div class="play__controls">
+          <button class="btn btn--sm" type="button" id="ctl-shock">Shockwave</button>
+          <button class="btn btn--sm" type="button" id="ctl-gravity" aria-pressed="false">Cut Gravity</button>
+          <button class="btn btn--sm" type="button" id="ctl-add">Add Glove</button>
+          <button class="btn btn--sm btn--ghost" type="button" id="ctl-reset">Reset Floor</button>
+        </div>
+
+        <p class="play__note mono">
+          ENGINE <s>//</s> SEMI-IMPLICIT EULER, 120 HZ SUBSTEP, MASS-WEIGHTED
+          IMPULSE RESOLUTION WITH PER-BODY RESTITUTION. AUDIO <s>//</s> WEB AUDIO
+          NOISE BURST + PITCH-SWEPT BODY, STEREO-PANNED BY IMPACT POSITION.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════  05 SUMMONS  ═══════════════════════ -->
+  <section class="sec" id="summons" data-section="summons">
+    <header class="sec__head reveal">
+      <p class="sec__index mono"><b>05</b> <s>//</s> THE SUMMONS</p>
+      <h2 class="sec__title">Entry Is Earned,<br />Then Paid For</h2>
+      <p class="sec__lede">
+        Every application begins with one assessed session on the floor. We cap
+        membership at 180 so that no one trains around a queue.
+      </p>
+    </header>
+
+    <div class="tiers reveal">
+      <article class="tier">
+        <p class="tier__tag mono">TIER 01</p>
+        <h3 class="tier__name">Initiate</h3>
+        <p class="tier__price"><span class="mono">£</span>65<span class="tier__per mono">/MO</span></p>
+        <ul class="tier__list">
+          <li>Open floor access, 06:00 — 20:00</li>
+          <li>Two group technique sessions weekly</li>
+          <li>Wrap and bag equipment provided</li>
+        </ul>
+        <p class="tier__cap mono">42 / 60 PLACES <span class="bar bar--thin"><b style="--fill:70%"></b></span></p>
+        <a class="btn btn--ghost btn--full" href="#enquire">Apply</a>
+      </article>
+
+      <article class="tier tier--feature">
+        <p class="tier__tag mono">TIER 02 <s>·</s> MOST TAKEN</p>
+        <h3 class="tier__name">Contender</h3>
+        <p class="tier__price"><span class="mono">£</span>120<span class="tier__per mono">/MO</span></p>
+        <ul class="tier__list">
+          <li>Unrestricted access, 04:30 — 22:30</li>
+          <li>Supervised sparring, three nights weekly</li>
+          <li>Monthly load review and video analysis</li>
+          <li>Priority ring booking</li>
+        </ul>
+        <p class="tier__cap mono">88 / 95 PLACES <span class="bar bar--thin"><b style="--fill:93%"></b></span></p>
+        <a class="btn btn--solid btn--full" href="#enquire">Apply</a>
+      </article>
+
+      <article class="tier">
+        <p class="tier__tag mono">TIER 03 <s>·</s> BY INVITATION</p>
+        <h3 class="tier__name">Warrior</h3>
+        <p class="tier__price"><span class="mono">£</span>340<span class="tier__per mono">/MO</span></p>
+        <ul class="tier__list">
+          <li>Everything in Contender</li>
+          <li>Named head coach and corner team</li>
+          <li>Competition licensing and matchmaking</li>
+          <li>Cold room and physiotherapy allocation</li>
+        </ul>
+        <p class="tier__cap mono">34 / 25 PLACES <span class="bar bar--thin"><b style="--fill:100%"></b></span></p>
+        <a class="btn btn--ghost btn--full" href="#enquire">Join Waitlist</a>
+      </article>
+    </div>
+
+    <div class="enquire reveal" id="enquire">
+      <div class="enquire__copy">
+        <h3 class="enquire__title">Request an Assessment</h3>
+        <p>
+          Tell us where you are now — untrained, returning, or licensed. A coach
+          replies within two working days with a slot on the floor.
+        </p>
+        <dl class="enquire__meta mono">
+          <div><dt>ADDRESS</dt><dd>Unit 4, Locking Road, Weston-super-Mare BS23</dd></div>
+          <div><dt>DESK</dt><dd>+44 (0)1934 000 000</dd></div>
+          <div><dt>EMAIL</dt><dd>floor@westonwarriors.example</dd></div>
+        </dl>
+      </div>
+
+      <form class="enquire__form" id="enquire-form" novalidate>
+        <div class="field">
+          <label for="f-name" class="mono">NAME</label>
+          <input id="f-name" name="name" type="text" autocomplete="name" required />
+        </div>
+        <div class="field">
+          <label for="f-email" class="mono">EMAIL</label>
+          <input id="f-email" name="email" type="email" autocomplete="email" required />
+        </div>
+        <div class="field">
+          <label for="f-level" class="mono">STANDING</label>
+          <select id="f-level" name="level">
+            <option>Untrained — starting from zero</option>
+            <option>Returning after a break</option>
+            <option>Trained, unlicensed</option>
+            <option>Licensed amateur</option>
+            <option>Professional</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-note" class="mono">WHAT ARE YOU AFTER?</label>
+          <textarea id="f-note" name="note" rows="3"></textarea>
+        </div>
+        <button class="btn btn--solid btn--full" type="submit">Send Request</button>
+        <p class="form__status mono" id="form-status" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+
+  <!-- ══════════════════  CODA — the ring, resolved  ═════════════════ -->
+  <section class="coda" aria-labelledby="coda-title">
+    <p class="mono coda__meta">FIELD STATE <s>//</s> 03 OF 03 <s>//</s> STRUCTURE RESOLVED</p>
+    <h2 class="coda__title" id="coda-title">The Ring Is Set</h2>
+    <p class="coda__lede">
+      Ruin, then storm, then order. One field of points, taught to hold a shape.
+    </p>
+  </section>
+
+  <footer class="foot">
+    <div class="foot__top">
+      <p class="foot__mark">Weston<br />Warriors</p>
+      <div class="foot__cols mono">
+        <div>
+          <p class="foot__k">HOURS</p>
+          <p>MON — FRI &nbsp; 04:30 / 22:30</p>
+          <p>SAT &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 06:00 / 20:00</p>
+          <p>SUN &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 08:00 / 16:00</p>
+        </div>
+        <div>
+          <p class="foot__k">SECTIONS</p>
+          <p><a href="#arena">01 THE ARENA</a></p>
+          <p><a href="#triumphs">02 TRIUMPHS</a></p>
+          <p><a href="#code">03 THE CODE</a></p>
+          <p><a href="#ground">04 PROVING GROUND</a></p>
+        </div>
+        <div>
+          <p class="foot__k">CONTACT</p>
+          <p>+44 (0)1934 000 000</p>
+          <p>floor@westonwarriors.example</p>
+          <p>BS23 &nbsp;·&nbsp; SOMERSET</p>
+        </div>
+      </div>
+    </div>
+    <div class="foot__bar mono">
+      <span>© 2011 — 2026 WESTON WARRIORS</span>
+      <span>UNTAMED GRIT <s>//</s> TAMED MASTERY</span>
+      <span>BUILT WITH THREE.JS &amp; WEB AUDIO</span>
+    </div>
+  </footer>
+</main>
+
+<div class="cursor" id="cursor" aria-hidden="true"><i></i></div>
+
+<script type="module" src="assets/js/main.js"></script>
+<noscript>
+  <style>.boot{display:none}.stage{display:none}</style>
+</noscript>
+</body>
+</html>
