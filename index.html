@@ -97,6 +97,14 @@
     <a href="#code" data-nav="code"><i class="mono">03</i> The Code</a>
     <a href="#ground" data-nav="ground"><i class="mono">04</i> The Exchange</a>
     <a href="#summons" data-nav="summons"><i class="mono">05</i> Summons</a>
+
+    <!-- Account block. Filled in by ui.js from /api/session when the member
+         platform is serving this page; falls back to the signed-out state. -->
+    <div class="nav__account" id="nav-account">
+      <p class="nav__account-k mono">MEMBER AREA</p>
+      <a class="btn btn--solid btn--full" href="/signin" data-account="signin">Sign In</a>
+      <a class="btn btn--ghost btn--full" href="/join" data-account="join">Create Account</a>
+    </div>
   </nav>
 
   <div class="nav__tools">

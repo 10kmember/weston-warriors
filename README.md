@@ -27,6 +27,19 @@ python3 -m http.server 8000     # or: npx http-server -p 8000
 
 Deploy by copying the directory to any static host.
 
+## Two halves
+
+The repository holds a static marketing site and a member platform.
+
+| | |
+| --- | --- |
+| **Marketing site** | Static HTML, CSS and ES modules at the repository root. Deploys anywhere, including GitHub Pages. |
+| **Member platform** | `app/`. Express and PostgreSQL: accounts, membership, billing, class booking and data rights. Needs a Node host. See [app/README.md](app/README.md). |
+
+The platform serves the marketing site too, so running `npm start` in `app/`
+gives you both on one origin and the session cookie works across them. The
+sign in control lives in the site's hamburger menu at every screen size.
+
 ## Structure
 
 ```
@@ -37,7 +50,9 @@ assets/js/scene.js            scroll-driven backdrop: particle morph shaders
 assets/js/sparring.js         section 04: two particle rigs, IK, punch script
 assets/js/audio.js            Web Audio drone and synthesised impact SFX
 assets/js/ui.js               scroll, reveals, counters, boot, cursor, nav, form
+assets/css/dashboard.css      member dashboard styles, extends the tokens above
 assets/vendor/three.module.js three.js r169, vendored
+app/                          the member platform: see app/README.md
 llms.txt                      machine-readable summary for language models
 robots.txt · sitemap.xml      crawler directives
 humans.txt                    credits

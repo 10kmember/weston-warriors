@@ -196,8 +196,10 @@ button { font: inherit; color: inherit; }
 
 .nav__tools { display: flex; align-items: center; gap: .6rem; }
 
+/* The burger is present at every width: it is where the member area lives, and
+   on desktop it opens as a small account dropdown rather than a full panel. */
 .nav__burger {
-  display: none;
+  display: flex;
   flex-direction: column; justify-content: center; gap: 5px;
   width: 2.6rem; height: 2.35rem;
   padding: 0;
@@ -212,6 +214,22 @@ button { font: inherit; color: inherit; }
 }
 .nav.is-open .nav__burger span:first-child { transform: translateY(3px) rotate(45deg); }
 .nav.is-open .nav__burger span:last-child { transform: translateY(-3px) rotate(-45deg); }
+
+/* ---------------------------------------------------------- account menu */
+.nav__account {
+  position: absolute; top: 100%; right: var(--gut);
+  width: min(17rem, calc(100vw - 2 * var(--gut)));
+  display: grid; gap: .5rem;
+  padding: 1.1rem;
+  background: rgba(10, 10, 10, .97);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--hair);
+  opacity: 0; visibility: hidden; transform: translateY(-.4rem);
+  transition: opacity .3s var(--ease), transform .3s var(--ease), visibility .3s;
+}
+.nav.is-open .nav__account { opacity: 1; visibility: visible; transform: none; }
+.nav__account-k { color: var(--bronze); margin: 0 0 .2rem; }
+.nav__account .btn { padding-block: .8em; }
 
 .audio-toggle {
   display: flex; align-items: center; gap: .55rem;
@@ -870,8 +888,15 @@ button { font: inherit; color: inherit; }
   .star { grid-template-columns: 1fr; }
 }
 @media (max-width: 820px) {
-  /* the links become a full-bleed panel behind the burger */
-  .nav__burger { display: flex; }
+  /* the links become a full-bleed panel behind the burger, with the account
+     block sitting at the bottom of it rather than floating as a dropdown */
+  .nav__account {
+    position: static; width: auto; padding: 1.2rem 0 0;
+    margin-top: .8rem;
+    background: none; backdrop-filter: none;
+    border: 0; border-top: 1px solid var(--hair);
+    opacity: 1; visibility: visible; transform: none;
+  }
   .nav__links {
     position: fixed; inset: 0 0 auto;
     flex-direction: column; gap: 0;

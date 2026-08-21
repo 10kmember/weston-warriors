@@ -252,6 +252,50 @@ export function initNav() {
   });
 }
 
+/* --------------------------------------------------------- account menu -- */
+
+/**
+ * Swaps the menu's account block to the signed-in state.
+ *
+ * The marketing page is static, so it asks the member platform who it is
+ * talking to. When this page is served from a plain static host there is no
+ * API to ask, the fetch fails, and the signed-out links stay as they are.
+ */
+export async function initAccountMenu() {
+  const host = document.getElementById('nav-account');
+  if (!host) return;
+
+  let data;
+  try {
+    const res = await fetch('/api/session', {
+      credentials: 'same-origin',
+      headers: { accept: 'application/json' },
+    });
+    if (!res.ok) return;
+    if (!res.headers.get('content-type')?.includes('application/json')) return;
+    data = await res.json();
+  } catch {
+    return;                       // no platform behind this page
+  }
+
+  if (!data?.signedIn) return;
+
+  const name = escapeHtml(data.firstName || 'member').toUpperCase();
+  host.innerHTML = `
+    <p class="nav__account-k mono">SIGNED IN AS ${name}</p>
+    <a class="btn btn--solid btn--full" href="/dashboard">Your Dashboard</a>
+    <form method="post" action="/signout">
+      <input type="hidden" name="_csrf" value="${escapeHtml(data.csrfToken || '')}" />
+      <button class="btn btn--ghost btn--full" type="submit">Sign Out</button>
+    </form>`;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 /* ------------------------------------------------------------------- form -- */
 
 export function initForm() {
