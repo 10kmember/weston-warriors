@@ -10,6 +10,7 @@ import express from 'express';
 import { query, one, transaction } from '../db.js';
 import { requireAuth, requireCsrf, audit } from '../auth.js';
 import { str, Errors, POSTCODE_RE } from '../validate.js';
+import { AVATARS, AVATAR_CREDIT, isAvatarKey, avatarSrc } from '../avatars.js';
 import {
   page, esc, money, shortDate, longDateTime, statusPill, card, csrf, field, textarea, empty,
 } from '../views/layout.js';
@@ -523,6 +524,28 @@ function profilePage(req, member, { errors = new Errors(), saved = false, health
     <form method="post" action="/dashboard/profile" novalidate>
       ${csrf(req.session.csrf_token)}
 
+      ${card('Your face', `
+        <p class="muted">
+          Pick the one that suits you. There is no upload: everybody chooses from
+          the same ten, so nothing you own leaves your device and no photograph
+          of you is ever stored here.
+        </p>
+        <ul class="picker">
+          ${AVATARS.map((a) => `
+          <li>
+            <input class="picker__input" type="radio" name="avatar_key" id="av-${esc(a.key)}"
+                   value="${esc(a.key)}" ${a.key === (member.avatar_key || 'green-calm') ? 'checked' : ''} />
+            <label class="picker__opt" for="av-${esc(a.key)}">
+              <img src="${esc(avatarSrc(a.key))}" alt="" width="72" height="76" loading="lazy" />
+              <span class="picker__name">${esc(a.name)}</span>
+              <span class="picker__mood mono">${esc(a.mood)}</span>
+            </label>
+          </li>`).join('')}
+        </ul>
+        <p class="picker__credit mono">
+          ILLUSTRATIONS <s>//</s> ${esc(AVATAR_CREDIT.illustrator).toUpperCase()}
+        </p>`)}
+
       ${card('Identity', `
         <div class="grid2">
           ${field('first_name', 'FIRST NAME', member.first_name, { required: true, error: e('first_name') })}
@@ -609,17 +632,24 @@ accountRouter.post('/dashboard/profile', requireCsrf, async (req, res, next) => 
     // Medical notes are only writable while consent stands.
     const notes = healthConsent?.granted ? str(req.body.medical_notes, 2000) : null;
 
+    // The avatar must be one of ours. Anything else is ignored rather than
+    // rejected: it can only come from a hand-edited form.
+    const submittedAvatar = str(req.body.avatar_key, 40);
+    const avatarKey = isAvatarKey(submittedAvatar) ? submittedAvatar : null;
+
     await query(
       `UPDATE members SET
          first_name = $1, last_name = $2, phone = $3, date_of_birth = $4,
          address_line1 = $5, address_line2 = $6, city = $7, postcode = $8,
          emergency_contact_name = $9, emergency_contact_phone = $10,
          medical_notes = COALESCE($11, medical_notes),
+         avatar_key = COALESCE($12, avatar_key),
          updated_at = now()
-       WHERE id = $12`,
+       WHERE id = $13`,
       [values.first_name, values.last_name, values.phone, values.date_of_birth,
        values.address_line1, values.address_line2, values.city, values.postcode,
-       values.emergency_contact_name, values.emergency_contact_phone, notes, memberId]
+       values.emergency_contact_name, values.emergency_contact_phone, notes,
+       avatarKey, memberId]
     );
 
     await audit(req, {

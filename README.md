@@ -34,7 +34,7 @@ The repository holds a static marketing site and a member platform.
 | | |
 | --- | --- |
 | **Marketing site** | Static HTML, CSS and ES modules at the repository root. Deploys anywhere, including GitHub Pages. |
-| **Member platform** | `app/`. Express and PostgreSQL: accounts, membership, billing, class booking and data rights. Needs a Node host. See [app/README.md](app/README.md). |
+| **Member platform** | `app/`. Express and PostgreSQL: accounts, membership, billing, class booking and data rights. Deploys to Vercel with Supabase. See [app/README.md](app/README.md). |
 
 The platform serves the marketing site too, so running `npm start` in `app/`
 gives you both on one origin and the session cookie works across them. The
@@ -51,6 +51,9 @@ assets/js/sparring.js         section 04: two particle rigs, IK, punch script
 assets/js/audio.js            Web Audio drone and synthesised impact SFX
 assets/js/ui.js               scroll, reveals, counters, boot, cursor, nav, form
 assets/css/dashboard.css      member dashboard styles, extends the tokens above
+assets/avatars/               ten default member avatars, plus their manifest
+tools/make-avatars.mjs        generates the avatar set
+api/index.js · vercel.json    serverless entry point and routing for Vercel
 assets/vendor/three.module.js three.js r169, vendored
 app/                          the member platform: see app/README.md
 llms.txt                      machine-readable summary for language models
@@ -172,3 +175,7 @@ locally but posts nowhere. Wire `initForm` in `assets/js/ui.js` to your endpoint
 ## Credits
 
 Designed and built by [father](https://princey.netlify.app).
+
+Default member avatars are credited to **Alesyia Volkova**. Members choose from
+ten faces and cannot upload their own, so the product has no image upload path
+at all. Regenerate the set with `npm run avatars`.

@@ -2,6 +2,7 @@
   "name": "weston-warriors-platform",
   "version": "1.0.0",
   "private": true,
+  "main": "src/server.js",
   "description": "Member dashboard for Weston Warriors ABC: accounts, membership, billing and data rights.",
   "type": "module",
   "engines": {

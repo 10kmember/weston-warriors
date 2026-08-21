@@ -39,6 +39,20 @@ export const config = {
 
   // Where the static marketing site lives, relative to app/
   staticRoot: process.env.STATIC_ROOT || '..',
+
+  // TLS to the database. Managed providers need it; a local socket does not.
+  // Set explicitly with DATABASE_SSL=true|false, otherwise inferred.
+  databaseSsl: process.env.DATABASE_SSL
+    ? process.env.DATABASE_SSL === 'true'
+    : /supabase|neon|render|amazonaws|sslmode=require/i.test(process.env.DATABASE_URL || ''),
+  databaseCa: process.env.DATABASE_CA || '',
+
+  // Vercel and friends set this. It changes how we size the connection pool
+  // and stops us starting an interval timer that a lambda would never run.
+  isServerless: !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME),
+
+  // Shared secret for the scheduled erasure endpoint.
+  cronSecret: process.env.CRON_SECRET || '',
 };
 
 if (isProd && config.sessionSecret === 'dev-only-not-a-secret') {

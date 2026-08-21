@@ -44,6 +44,10 @@ scene renders a sparring round between two particle figures.
 
 ## Credits
 
+Default avatar illustrations are credited to **Alesyia Volkova**. Members choose
+one of ten faces; there is no upload path in the product.
+
+
 This site was designed and built by **father**, whose work lives at
 <https://princey.netlify.app>.
 

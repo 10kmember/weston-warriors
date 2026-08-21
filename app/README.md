@@ -32,19 +32,31 @@ both. Open `/` for the site and `/dashboard` for the member area.
 
 ### Seeded accounts
 
-Every seeded member has the password **`WarriorsTest2026`**.
+Two members, two invoices each. Sign in at `/signin` with:
 
-| Email | What it demonstrates |
-| --- | --- |
-| `demo@westonwarriors.example` | Active Contender, full invoice history |
-| `overdue@westonwarriors.example` | Past due, with a declined card payment |
-| `leaving@westonwarriors.example` | Cancelling at period end |
-| `paused@westonwarriors.example` | Paused Warrior membership |
-| `nosub@westonwarriors.example` | Registered, no membership yet |
-| `erasing@westonwarriors.example` | Erasure requested, 26 days of grace left |
+| Email | Password | State |
+| --- | --- | --- |
+| `demo@westonwarriors.example` | `WarriorsTest2026` | Contender, active, both invoices paid |
+| `overdue@westonwarriors.example` | `WarriorsTest2026` | Initiate, past due, one declined card payment |
 
-The seed is deterministic, so the same run produces the same data every time.
-It also writes one already-erased member so the tombstone state is visible.
+`npm run seed` prints these at the end of every run, so you never have to come
+back here for them.
+
+The seed is deterministic and small on purpose: enough to populate every screen
+and to show the two states worth looking at, without rows you have to scroll
+past to reach the one you care about.
+
+### Avatars
+
+Members pick from ten faces and cannot upload anything. That is a product
+decision with a useful consequence: there is no file upload path in the
+application, so no image parsing, no storage bucket, no EXIF to strip, no
+moderation queue and no way to smuggle a payload in through an avatar. The
+column holds a key and the key is checked against `assets/avatars/manifest.json`.
+
+Illustrations are credited to **Alesyia Volkova**. Regenerate the set with
+`npm run avatars` from the repository root; `tools/make-avatars.mjs` holds the
+drawing code, so a change to one helper moves all ten faces together.
 
 ## What is in it
 
@@ -124,14 +136,57 @@ The sweep runs hourly inside the web process. At any real scale it belongs in a
 scheduled job instead: `runErasureSweep()` in `src/erasure.js` is safe to call
 from anywhere.
 
-## Deployment
+## Deploying to Vercel with Supabase
 
-This will not run on GitHub Pages. Pages serves static files only, and this
-needs Node and PostgreSQL. Use any host that runs both (Railway, Render, Fly,
-or a VPS), point `DATABASE_URL` at a managed Postgres, set `SESSION_SECRET` and
-`NODE_ENV=production`, run `npm run migrate` on deploy, and let the app serve
-the marketing site too.
+This cannot run on GitHub Pages: Pages serves static files, and this needs Node
+and PostgreSQL. The repository is set up for Vercel plus Supabase.
 
-If you keep the marketing site on Pages as well, the sign in links in its menu
-will 404 there, because there is no server behind them. Either point them at
-the platform's domain or serve the whole site from the platform.
+**1. Supabase.** Create a project, then take two connection strings from
+Settings → Database:
+
+- the **direct** connection (port 5432) for migrations
+- the **transaction pooler** (port 6543) for the app
+
+Run the migrations against the direct connection from your machine:
+
+```bash
+DATABASE_URL='postgresql://postgres:PASSWORD@db.PROJECT.supabase.co:5432/postgres' \
+  npm run migrate
+```
+
+Seeding is optional and development only. Do not run it against a database with
+real members in it: it truncates every table first.
+
+**2. Vercel.** Import the repository. `vercel.json` already routes every request
+to `api/index.js`, which is the same Express app, so there is one code path in
+development and in production. Set these environment variables:
+
+| Variable | Value |
+| --- | --- |
+| `DATABASE_URL` | the **pooler** string, port 6543 |
+| `SESSION_SECRET` | `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"` |
+| `NODE_ENV` | `production` |
+| `CRON_SECRET` | any long random string |
+
+`DATABASE_SSL` is inferred from the hostname, so Supabase connections encrypt
+without you setting anything. If you want certificate verification rather than
+encryption alone, put Supabase's CA PEM in `DATABASE_CA`.
+
+**3. Erasure on a schedule.** A serverless function has no process to hold a
+timer, so the hourly sweep in `server.js` never runs there. `vercel.json`
+registers a daily cron against `/internal/erasure-sweep`, which is a 404 to
+anyone without the `CRON_SECRET` bearer token.
+
+### Things to know about this shape
+
+- Every request, including the marketing site, goes through the function.
+  That is the simplest correct arrangement, and it means the vendored
+  `three.module.js` is served by a lambda rather than a CDN. If that matters,
+  split the static site into its own Vercel project and point the member links
+  at the platform's domain.
+- The login throttle lives in memory, so on serverless it is per-instance
+  rather than global. The per-account lockout in the database still holds.
+  Move the IP throttle into Postgres or Redis before you rely on it.
+- The transaction pooler does not support session-level features. This app
+  does not use them: no `LISTEN`, no advisory locks, no named prepared
+  statements.

@@ -81,9 +81,7 @@ export function page({ title, body, member, active = '', flash = null, wide = fa
       <span>${esc(label)}</span>
     </a>`).join('') : '';
 
-  const initials = member
-    ? esc(((member.first_name || member.email || '?')[0] + (member.last_name || '')[0] || '').toUpperCase())
-    : '';
+  const avatarUrl = member ? `/assets/avatars/${esc(member.avatar_key || 'green-calm')}.svg` : '';
 
   const erasureBanner = member?.erasure_requested_at ? `
     <div class="banner banner--bad">
@@ -123,7 +121,7 @@ export function page({ title, body, member, active = '', flash = null, wide = fa
   <div class="topbar__right">
     <a class="topbar__site mono" href="/">Main site</a>
     <div class="who">
-      <span class="who__avatar" aria-hidden="true">${initials}</span>
+      <img class="who__avatar" src="${avatarUrl}" alt="" width="34" height="34" />
       <span class="who__name mono">${esc(member.first_name || member.email)}</span>
     </div>
   </div>` : `

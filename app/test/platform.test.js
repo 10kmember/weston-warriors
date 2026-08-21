@@ -153,4 +153,37 @@ test('the sweep only takes members whose grace period has passed', async () => {
   await query('DELETE FROM members WHERE id = ANY($1)', [[soon.id, due.id]]);
 });
 
+
+/* -------------------------------------------------------------- avatars -- */
+
+test('the avatar set is closed: only shipped keys are accepted', async () => {
+  const { AVATARS, isAvatarKey, DEFAULT_AVATAR, avatarSrc } = await import('../src/avatars.js');
+
+  assert.equal(AVATARS.length, 10);
+  assert.ok(isAvatarKey(DEFAULT_AVATAR));
+  for (const a of AVATARS) assert.ok(isAvatarKey(a.key), a.key);
+
+  // anything a hand-edited form could send
+  for (const bad of ['', null, undefined, '../../etc/passwd', 'green-calm.svg',
+                     '<script>', 'http://evil/x.svg', 'GREEN-CALM']) {
+    assert.equal(isAvatarKey(bad), false, String(bad));
+  }
+
+  // and the src for a bad key falls back rather than reflecting it
+  assert.equal(avatarSrc('../../etc/passwd'), `/assets/avatars/${DEFAULT_AVATAR}.svg`);
+});
+
+test('every avatar in the manifest has a file on disk', async () => {
+  const { AVATARS } = await import('../src/avatars.js');
+  const fs = await import('node:fs/promises');
+  const path = await import('node:path');
+  for (const a of AVATARS) {
+    const file = path.resolve('..', 'assets', 'avatars', `${a.key}.svg`);
+    const svg = await fs.readFile(file, 'utf8');
+    assert.match(svg, /^<svg /, a.key);
+    assert.ok(svg.includes('<circle'), `${a.key} should draw a face`);
+  }
+});
+
+// Closes the pool once every test above has run.
 test.after(async () => { await pool.end(); });

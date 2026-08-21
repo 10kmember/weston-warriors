@@ -1,0 +1,23 @@
+{
+  "name": "weston-warriors",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Weston Warriors ABC: marketing site and member platform.",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node app/src/server.js",
+    "dev": "node --watch app/src/server.js",
+    "migrate": "node app/db/migrate.js",
+    "seed": "node app/db/seed.js",
+    "reset": "npm run migrate && npm run seed",
+    "test": "node --test app/test/*.test.js",
+    "avatars": "node tools/make-avatars.mjs"
+  },
+  "//": "Declared here as well as in app/package.json so Vercel, which installs from the repository root, resolves them for the serverless function.",
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "express": "^4.21.2",
+    "pg": "^8.13.1"
+  }
+}

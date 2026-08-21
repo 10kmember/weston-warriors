@@ -1,0 +1,68 @@
+{
+  "credit": {
+    "illustrator": "Alesyia Volkova",
+    "note": "Default avatar illustrations in the style of, and credited to, Alesyia Volkova."
+  },
+  "avatars": [
+    {
+      "key": "green-calm",
+      "name": "Calm",
+      "mood": "Steady and quietly pleased",
+      "colour": "#22A046"
+    },
+    {
+      "key": "green-nervy",
+      "name": "Nervy",
+      "mood": "Wound up before the bell",
+      "colour": "#22A046"
+    },
+    {
+      "key": "yellow-sly",
+      "name": "Sly",
+      "mood": "Up to something",
+      "colour": "#E8CF1B"
+    },
+    {
+      "key": "red-fired-up",
+      "name": "Fired Up",
+      "mood": "Ready to go three rounds",
+      "colour": "#E02A2A"
+    },
+    {
+      "key": "orange-wild",
+      "name": "Wild",
+      "mood": "All gas, no brakes",
+      "colour": "#F08A22"
+    },
+    {
+      "key": "red-unbothered",
+      "name": "Unbothered",
+      "mood": "Seen it all before",
+      "colour": "#E02A2A"
+    },
+    {
+      "key": "yellow-tender",
+      "name": "Tender",
+      "mood": "Having a moment",
+      "colour": "#E8CF1B"
+    },
+    {
+      "key": "orange-beaming",
+      "name": "Beaming",
+      "mood": "Just won something",
+      "colour": "#F08A22"
+    },
+    {
+      "key": "teal-laughing",
+      "name": "Laughing",
+      "mood": "Cannot keep it together",
+      "colour": "#12A5B8"
+    },
+    {
+      "key": "teal-startled",
+      "name": "Startled",
+      "mood": "Did not see that coming",
+      "colour": "#12A5B8"
+    }
+  ]
+}

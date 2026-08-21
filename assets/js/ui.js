@@ -281,8 +281,9 @@ export async function initAccountMenu() {
   if (!data?.signedIn) return;
 
   const name = escapeHtml(data.firstName || 'member').toUpperCase();
+  const face = data.avatar ? `<img class="nav__account-face" src="${escapeHtml(data.avatar)}" alt="" width="34" height="34" />` : '';
   host.innerHTML = `
-    <p class="nav__account-k mono">SIGNED IN AS ${name}</p>
+    <p class="nav__account-k mono">${face}SIGNED IN AS ${name}</p>
     <a class="btn btn--solid btn--full" href="/dashboard">Your Dashboard</a>
     <form method="post" action="/signout">
       <input type="hidden" name="_csrf" value="${escapeHtml(data.csrfToken || '')}" />

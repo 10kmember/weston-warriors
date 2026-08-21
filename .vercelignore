@@ -1,0 +1,5 @@
+tools/
+app/test/
+app/db/seed.js
+node_modules/
+.git/

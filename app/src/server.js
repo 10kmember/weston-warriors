@@ -67,8 +67,30 @@ app.get('/api/session', (req, res) => {
   res.json({
     signedIn: true,
     firstName: req.session.first_name || null,
+    avatar: `/assets/avatars/${req.session.avatar_key || 'green-calm'}.svg`,
     csrfToken: req.session.csrf_token,
   });
+});
+
+/**
+ * Scheduled erasure sweep.
+ *
+ * On a long running server the interval at the bottom of this file does the
+ * work. On serverless there is no process to hold a timer, so a platform cron
+ * calls this instead. Vercel signs its cron requests with CRON_SECRET.
+ */
+app.get('/internal/erasure-sweep', async (req, res) => {
+  const supplied = (req.get('authorization') || '').replace(/^Bearer\s+/i, '');
+  if (!config.cronSecret || supplied !== config.cronSecret) {
+    return res.status(404).json({ error: 'not found' });
+  }
+  try {
+    const erased = await runErasureSweep();
+    res.json({ ok: true, erased: erased.length });
+  } catch (err) {
+    console.error('[erasure] sweep failed', err);
+    res.status(500).json({ ok: false });
+  }
 });
 
 app.use(authRouter);
@@ -131,6 +153,8 @@ app.use((err, req, res, next) => {  // eslint-disable-line no-unused-vars
 
 /* ---------------------------------------------------------------- boot ---- */
 
+// Only when run directly. Imported by api/index.js on serverless, where there
+// is no process to hold a listener or an interval.
 if (process.argv[1] && process.argv[1].endsWith('server.js')) {
   const server = app.listen(config.port, () => {
     console.log(`[ww] listening on http://localhost:${config.port} (${config.env})`);

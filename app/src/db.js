@@ -15,11 +15,27 @@ import { config } from './config.js';
 // audit_log ids, where a string is fine.
 pg.types.setTypeParser(pg.types.builtins.NUMERIC, (v) => (v === null ? null : Number(v)));
 
+/**
+ * Supabase (and most managed Postgres) require TLS, and their pooler presents a
+ * certificate for a shared hostname that the public CA chain does not vouch for
+ * per-project. We therefore encrypt but do not verify, which is what
+ * `?sslmode=require` means to libpq too. Set DATABASE_CA to a PEM to verify
+ * properly.
+ */
+function sslOptions() {
+  if (config.databaseCa) return { ca: config.databaseCa, rejectUnauthorized: true };
+  if (config.databaseSsl) return { rejectUnauthorized: false };
+  return false;
+}
+
 export const pool = new pg.Pool({
   connectionString: config.databaseUrl,
-  max: 10,
-  idleTimeoutMillis: 30_000,
-  connectionTimeoutMillis: 5_000,
+  ssl: sslOptions(),
+  // One connection per instance on serverless: every warm lambda holds its own
+  // pool, and Supabase's transaction pooler is what does the real pooling.
+  max: config.isServerless ? 1 : 10,
+  idleTimeoutMillis: config.isServerless ? 10_000 : 30_000,
+  connectionTimeoutMillis: 8_000,
 });
 
 pool.on('error', (err) => {
