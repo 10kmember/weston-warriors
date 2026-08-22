@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Hung Up the Gloves — Weston Warriors</title>
+<meta name="description" content="That page is not in the building." />
+<meta name="theme-color" content="#0A0A0A" />
+<meta name="robots" content="noindex, follow" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Nunito:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/css/main.css" />
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230A0A0A'/%3E%3Cg fill='none' stroke='%23FF5500' stroke-width='2.2' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M3 9l3 14 3-9 3 9 3-14'/%3E%3Cpath d='M17 9l3 14 3-9 3 9 3-14'/%3E%3C/g%3E%3C/svg%3E" />
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "/assets/vendor/three.module.js"
+  }
+}
+</script>
+
+<style>
+  .lost {
+    min-height: 100svh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    position: relative;
+    isolation: isolate;
+  }
+
+  .lost__canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    pointer-events: none;
+  }
+
+  /* The copy has to win. On a wide screen the scene is pushed right, so the
+     scrim falls off across the frame; on a narrow one it is pushed up, so the
+     scrim falls off down it. Either way the text never sits on a glove. */
+  .lost::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(100deg,
+      var(--ink) 0%,
+      rgba(10, 10, 10, .94) 24%,
+      rgba(10, 10, 10, .45) 48%,
+      rgba(10, 10, 10, 0) 70%);
+  }
+
+  @media (max-width: 60rem) {
+    .lost::before {
+      background: linear-gradient(180deg,
+        rgba(10, 10, 10, 0) 0%,
+        rgba(10, 10, 10, .35) 22%,
+        rgba(10, 10, 10, .92) 38%,
+        var(--ink) 50%);
+    }
+  }
+
+  .lost__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: clamp(1.1rem, 3vw, 2rem) clamp(1.1rem, 5vw, 4rem);
+  }
+
+  .lost__mark { display: flex; align-items: center; gap: .6rem; color: var(--bone); }
+  .lost__mark svg { width: 2.6rem; height: auto; overflow: visible; }
+  .lost__mark span {
+    font-family: var(--display);
+    font-size: 1.25rem;
+    line-height: .82;
+    text-transform: uppercase;
+    letter-spacing: .01em;
+  }
+
+  .lost__body {
+    display: grid;
+    align-content: center;
+    justify-items: start;
+    gap: 1.1rem;
+    padding: clamp(1.5rem, 6vw, 3rem) clamp(1.1rem, 5vw, 4rem);
+    max-width: min(46rem, 58%);
+  }
+
+  @media (max-width: 60rem) {
+    .lost__body { max-width: 46rem; align-content: end; }
+  }
+
+  .lost__eyebrow { color: var(--bronze); font-size: .6rem; margin: 0; }
+
+  .lost__title {
+    font-family: var(--display);
+    font-size: clamp(3.6rem, 13vw, 8.6rem);
+    line-height: .76;
+    letter-spacing: -.005em;
+    text-transform: uppercase;
+    margin: 0;
+    color: var(--bone);
+    text-wrap: balance;
+  }
+
+  .lost__lede {
+    font-size: clamp(1rem, 1.6vw, 1.15rem);
+    line-height: 1.6;
+    color: var(--bone-dim);
+    margin: 0;
+    max-width: 34rem;
+  }
+
+  .lost__note {
+    border-left: 2px solid var(--ember);
+    padding: .85rem 0 .85rem 1rem;
+    margin: 0;
+    max-width: 36rem;
+    font-size: .92rem;
+    line-height: 1.6;
+    color: var(--bone-dim);
+    background: rgba(255, 85, 0, .045);
+  }
+  .lost__note strong { color: var(--bone); font-weight: 700; }
+  .lost__note code {
+    font-family: var(--mono);
+    font-size: .82em;
+    color: var(--ember);
+    background: rgba(255, 255, 255, .05);
+    padding: .12em .4em;
+  }
+
+  .lost__actions { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: .4rem; }
+
+  /* A laptop in landscape has less height than a phone has. Give the headline
+     back some of it rather than pushing the way out below the fold. */
+  @media (max-height: 56rem) and (min-width: 60rem) {
+    .lost__title { font-size: clamp(2.8rem, 8vw, 5.4rem); }
+    .lost__body { gap: .8rem; }
+  }
+
+  .lost__foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem 1.2rem;
+    justify-content: space-between;
+    padding: clamp(1.1rem, 3vw, 2rem) clamp(1.1rem, 5vw, 4rem);
+    border-top: 1px solid var(--hair);
+    color: var(--bone-faint);
+    font-size: .55rem;
+  }
+  .lost__foot a { color: var(--bone-dim); }
+  .lost__foot a:hover { color: var(--ember); }
+
+  @media (max-width: 40rem) {
+    .lost__body { justify-items: start; }
+  }
+</style>
+</head>
+<body class="is-lost">
+
+<a class="skip-link" href="#lost-main">Skip to content</a>
+
+<div class="lost">
+  <!-- The gloves. Decorative: everything it says is said in the copy as well. -->
+  <canvas class="lost__canvas" id="lost" aria-hidden="true"></canvas>
+
+  <header class="lost__top">
+    <a class="lost__mark" href="/">
+      <svg viewBox="0 0 44 24" aria-hidden="true" fill="none" stroke="#FF5500" stroke-width="2.4"
+           stroke-linejoin="round" stroke-linecap="round">
+        <path d="M2 4l4 16 4-11 4 11 4-16" />
+        <path d="M24 4l4 16 4-11 4 11 4-16" />
+      </svg>
+      <span>Weston<br />Warriors</span>
+    </a>
+    <p class="mono lost__eyebrow">ERROR <s>//</s> 404</p>
+  </header>
+
+  <main class="lost__body" id="lost-main">
+    <p class="mono lost__eyebrow">THE PAGE YOU WANTED</p>
+    <h1 class="lost__title">Hung Up<br />The Gloves</h1>
+    <p class="lost__lede" id="lost-lede">
+      That one is not in the building. It either never existed, moved while you
+      were away, or finished its last round and retired. Nothing is broken at
+      your end.
+    </p>
+
+    <!-- Filled in only when the path asked for is part of the member platform,
+         which is a server application rather than a page in the static site. -->
+    <p class="lost__note" id="lost-note" hidden></p>
+
+    <div class="lost__actions">
+      <a class="btn btn--solid" href="/">Back to the floor</a>
+      <a class="btn btn--ghost" href="/#summons">Membership</a>
+    </div>
+  </main>
+
+  <footer class="lost__foot">
+    <p class="mono">WESTON WARRIORS ABC <s>·</s> 22 COKER RD, WORLE, BS22 6BX</p>
+    <p class="mono">BUILT BY <a href="https://princey.netlify.app">FATHER</a></p>
+  </footer>
+</div>
+
+<script>
+  /**
+   * The member area is Express routes, not files. On a static host those paths
+   * have nothing behind them and land here, which looks like a missing file and
+   * is not. Say so plainly rather than letting somebody go looking for a
+   * signin.html that was never meant to exist.
+   */
+  (function () {
+    var path = location.pathname.replace(/\/+$/, '') || '/';
+    var member = /^\/(signin|join|dashboard|logout|signout)(\/|$)/.test(path);
+    var staff  = /^\/master(\/|$)/.test(path);
+    if (!member && !staff) return;
+
+    var note = document.getElementById('lost-note');
+    var lede = document.getElementById('lost-lede');
+
+    lede.textContent = staff
+      ? 'The master dashboard is part of the member platform, and the platform is not answering on this address.'
+      : 'The member area is part of the platform, and the platform is not answering on this address.';
+
+    note.innerHTML =
+      '<strong>Nothing is missing from the repository.</strong> ' +
+      '<code>' + path.replace(/[<>&"]/g, '') + '</code> is an Express route in ' +
+      '<code>app/</code>, rendered at request time, so no <code>.html</code> for ' +
+      'it exists to be served statically. Run <code>npm start</code> in ' +
+      '<code>app/</code>, or deploy it, and this address answers. See ' +
+      '<code>app/README.md</code>.';
+    note.hidden = false;
+  }());
+</script>
+
+<script type="module">
+  import { initLost } from '/assets/js/lost.js';
+  initLost({
+    canvas: document.getElementById('lost'),
+    reduceMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  });
+</script>
+
+</body>
+</html>

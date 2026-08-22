@@ -138,7 +138,23 @@ app.use(express.static(repoRoot, {
 
 /* ------------------------------------------------------------- failures -- */
 
+/**
+ * Not found.
+ *
+ * Inside the dashboard or the staff area a member is mid-task and wants their
+ * own navigation back, so they get the shell they were already in. Everywhere
+ * else gets 404.html from the repository root, which is the same page a static
+ * host serves, so the site has one 404 rather than two that drift apart.
+ */
 app.use((req, res) => {
+  const inShell = req.path.startsWith('/dashboard') || req.path.startsWith('/master');
+
+  if (!inShell) {
+    return res.status(404).sendFile(path.join(repoRoot, '404.html'), (err) => {
+      if (err && !res.headersSent) res.status(404).type('txt').send('Not found');
+    });
+  }
+
   res.status(404).send(page({
     title: 'Not found',
     member: req.session,

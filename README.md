@@ -40,6 +40,13 @@ The platform serves the marketing site too, so running `npm start` in `app/`
 gives you both on one origin and the session cookie works across them. The
 sign in control lives in the site's hamburger menu at every screen size.
 
+**The member area is not a set of files.** `/signin`, `/join`, `/dashboard` and
+`/master` are Express routes that render at request time; there is no
+`signin.html` anywhere in the repository and there is not meant to be. Serve the
+repository as static files and those addresses have nothing behind them. Run the
+platform (`npm start` in `app/`) or deploy it, and they answer. The 404 page says
+as much if you land on one of them without a server.
+
 There are three doors:
 
 | Path | Who | Sign in at |
@@ -57,10 +64,12 @@ price in one place changes it everywhere.
 
 ```
 index.html                    all content, in markup, for SEO and no-JS reading
+404.html                      not found: a pair of gloves hung over the ropes
 assets/css/main.css           design tokens, layout, motion
 assets/js/main.js             entry point; wires subsystems, degrades each one
 assets/js/scene.js            scroll-driven backdrop: particle morph shaders
 assets/js/sparring.js         section 04: two particle rigs, IK, punch script
+assets/js/lost.js             the 404 scene: two gloves swinging on a rope
 assets/js/audio.js            Web Audio drone and synthesised impact SFX
 assets/js/ui.js               scroll, reveals, counters, boot, cursor, nav, form, prices
 assets/css/dashboard.css      member dashboard styles, extends the tokens above

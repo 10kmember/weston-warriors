@@ -3,7 +3,7 @@
   "functions": {
     "api/index.js": {
       "maxDuration": 15,
-      "includeFiles": "{index.html,humans.txt,llms.txt,robots.txt,sitemap.xml,assets/**,.well-known/**,app/**}"
+      "includeFiles": "{index.html,404.html,humans.txt,llms.txt,robots.txt,sitemap.xml,assets/**,.well-known/**,app/**}"
     }
   },
   "rewrites": [
