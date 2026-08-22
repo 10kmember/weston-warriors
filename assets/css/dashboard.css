@@ -529,3 +529,63 @@ textarea.f__input { resize: vertical; }
   .recon { grid-template-columns: 1fr; }
   .recon__sums { flex-direction: row; gap: 1rem; }
 }
+
+/* ─────────────────────────────────────────────────────────── pricing ───── */
+
+.sub__note { color: var(--bronze); font-size: .55rem; margin: .5rem 0 0; letter-spacing: .08em; }
+
+.planrow { border-top: 1px solid var(--hair); padding: 1.4rem 0; }
+.planrow:first-child { border-top: 0; padding-top: 0; }
+.planrow--off { opacity: .55; }
+.planrow:target { box-shadow: inset 2px 0 0 var(--ember); padding-left: 1rem; }
+
+.planrow__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.planrow__head p.mono { font-size: .55rem; color: var(--bronze); margin: 0 0 .2rem; }
+.planrow__name {
+  font-family: var(--display); font-size: clamp(1.5rem, 3vw, 2.1rem);
+  line-height: .9; margin: 0; text-transform: uppercase;
+}
+.planrow__price { font-family: var(--display); font-size: 2rem; line-height: 1; margin: 0; color: var(--bone); }
+.planrow__price .mono { font-size: .3em; color: var(--bone-faint); margin-left: .3em; vertical-align: .4em; }
+
+.planrow__stats { display: flex; gap: 1.6rem; flex-wrap: wrap; margin: .9rem 0 0; }
+.planrow__stats dt { color: var(--bronze); font-size: .5rem; margin: 0 0 .15rem; }
+.planrow__stats dd { margin: 0; font-size: .95rem; }
+
+.drop { margin-top: .9rem; border: 1px solid var(--hair); }
+.drop > summary {
+  cursor: pointer; padding: .6rem .8rem; font-size: .55rem;
+  color: var(--bronze); letter-spacing: .1em; list-style: none;
+}
+.drop > summary::-webkit-details-marker { display: none; }
+.drop > summary::before { content: "+ "; }
+.drop[open] > summary::before { content: "− "; }
+.drop > summary:hover { color: var(--ember); }
+.drop[open] > summary { border-bottom: 1px solid var(--hair); }
+.drop--edit[open] { border-color: var(--hair-warm); }
+
+.heldlist, .histlist { list-style: none; margin: 0; padding: .6rem .8rem; display: grid; gap: .5rem; }
+.held { display: flex; align-items: center; justify-content: space-between; gap: .8rem; flex-wrap: wrap; }
+.histlist li { display: flex; gap: .6rem; flex-wrap: wrap; font-size: .6rem; align-items: baseline; }
+
+.planform { padding: .9rem .8rem; display: grid; gap: .8rem; }
+.planform__go { display: flex; justify-content: flex-end; }
+.price2 { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fit, minmax(min(9rem, 100%), 1fr)); }
+.price2__amt { display: flex; align-items: center; gap: .4rem; }
+.price2__amt .mono { color: var(--bronze); font-size: 1rem; }
+.price2__amt .f__input { flex: 1; }
+
+.apply { border: 1px solid var(--hair); padding: .8rem; margin: 0; display: grid; gap: .7rem; }
+.apply legend { padding: 0 .4rem; }
+.apply__opt { display: flex; gap: .6rem; align-items: flex-start; cursor: pointer; }
+.apply__opt input { margin-top: .25rem; flex: 0 0 auto; accent-color: var(--ember); }
+.apply__opt strong { display: block; font-weight: 700; font-size: .9rem; }
+.apply__opt small { display: block; color: var(--bone-faint); font-size: .72rem; line-height: 1.45; margin-top: .15rem; }
+
+.raterow { display: flex; gap: .7rem; align-items: flex-end; flex-wrap: wrap; margin-top: 1rem; }
+.raterow .f { margin: 0; }
+.raterow input[name="price"] { width: 6rem; }
+.raterow input[name="reason"] { min-width: 18rem; }
+.raterow .f__label { white-space: nowrap; }
+.kv dd a { color: var(--bone); border-bottom: 1px solid var(--hair-warm); }
+.kv dd a:hover { color: var(--ember); }

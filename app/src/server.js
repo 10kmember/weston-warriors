@@ -12,7 +12,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 
 import { config } from './config.js';
-import { pool, one } from './db.js';
+import { pool, one, query } from './db.js';
 import { attachSession } from './auth.js';
 import { authRouter } from './routes/auth.js';
 import { dashboardRouter } from './routes/dashboard.js';
@@ -72,6 +72,27 @@ app.get('/api/session', (req, res) => {
     avatar: `/assets/avatars/${req.session.avatar_key || 'green-calm'}.svg`,
     csrfToken: req.session.csrf_token,
   });
+});
+
+/**
+ * Public price list.
+ *
+ * The marketing page ships with prices in the markup so it still reads
+ * correctly on a static host with no server behind it. Where this app is the
+ * one serving it, the page asks here and corrects itself, so a price a coach
+ * changes in /master does not leave a stale number on the front page.
+ */
+app.get('/api/plans', async (req, res, next) => {
+  try {
+    const plans = await query(
+      `SELECT code, name, price_pence, billing_interval
+         FROM plans WHERE is_active ORDER BY sort_order, price_pence`
+    );
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    res.json({ plans });
+  } catch (err) {
+    next(err);
+  }
 });
 
 /**

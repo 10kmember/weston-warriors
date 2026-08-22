@@ -19,8 +19,8 @@ export const accountRouter = express.Router();
 accountRouter.use('/dashboard', requireAuth);
 
 const liveSubscription = (memberId) => one(
-  `SELECT s.*, p.name AS plan_name, p.code AS plan_code, p.price_pence,
-          p.billing_interval, p.features
+  `SELECT s.*, p.name AS plan_name, p.code AS plan_code, p.features,
+          p.price_pence AS list_price_pence
      FROM subscriptions s JOIN plans p ON p.id = s.plan_id
     WHERE s.member_id = $1 AND s.status IN ('trialing','active','past_due','paused')
     ORDER BY s.created_at DESC LIMIT 1`,
@@ -50,6 +50,8 @@ accountRouter.get('/dashboard/subscription', async (req, res, next) => {
           <h3 class="sub__plan">${esc(subscription.plan_name)}</h3>
           <p class="sub__price">${esc(money(subscription.price_pence))}<span class="mono">/${esc(subscription.billing_interval).toUpperCase()}</span></p>
           <p class="sub__status">${statusPill(subscription.status)}</p>
+          ${subscription.price_pence < subscription.list_price_pence ? `
+          <p class="sub__note mono">HELD AT YOUR ORIGINAL RATE <s>&middot;</s> THIS PLAN NOW LISTS AT ${esc(money(subscription.list_price_pence))}</p>` : ''}
         </div>
         <dl class="sub__meta mono">
           <div><dt>STARTED</dt><dd>${esc(shortDate(subscription.started_at))}</dd></div>
@@ -154,16 +156,18 @@ accountRouter.post('/dashboard/subscription/change', requireCsrf, async (req, re
       if (existing) {
         await tx.query(
           `UPDATE subscriptions
-              SET plan_id = $1, cancel_at_period_end = false, updated_at = now()
-            WHERE id = $2`,
-          [plan.id, existing.id]
+              SET plan_id = $1, price_pence = $2, billing_interval = $3,
+                  cancel_at_period_end = false, updated_at = now()
+            WHERE id = $4`,
+          [plan.id, plan.price_pence, plan.billing_interval, existing.id]
         );
       } else {
         await tx.query(
-          `INSERT INTO subscriptions (member_id, plan_id, status, started_at,
+          `INSERT INTO subscriptions (member_id, plan_id, price_pence, billing_interval,
+                                      status, started_at,
                                       current_period_start, current_period_end)
-           VALUES ($1, $2, 'active', now(), now(), now() + interval '1 month')`,
-          [memberId, plan.id]
+           VALUES ($1, $2, $3, $4, 'active', now(), now(), now() + interval '1 month')`,
+          [memberId, plan.id, plan.price_pence, plan.billing_interval]
         );
       }
     });

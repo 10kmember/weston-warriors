@@ -26,6 +26,7 @@ import { masterPage, masterSigninPage } from '../views/master-layout.js';
 import {
   esc, money, shortDate, longDateTime, statusPill, card, csrf, field, empty,
 } from '../views/layout.js';
+import { registerPricingRoutes } from './master-pricing.js';
 
 export const masterRouter = express.Router();
 
@@ -107,6 +108,10 @@ masterRouter.post('/master/signout', async (req, res, next) => {
 // Everything past here needs a staff session.
 masterRouter.use('/master', requireStaff);
 
+// Pricing lives in its own file but on this router, so it inherits the guard
+// above rather than declaring a second one that could drift out of step.
+registerPricingRoutes(masterRouter);
+
 /* --------------------------------------------------------------- helpers -- */
 
 /** Outstanding balance per member, from the invoice_balances view. */
@@ -124,6 +129,9 @@ const FLASH = {
   reversed: { kind: 'ok', message: 'Payment reversed. The original entry is kept, with a reversal beside it.' },
   voided: { kind: 'ok', message: 'Invoice voided.' },
   nothing: { kind: 'bad', message: 'Nothing to record: check the amount.' },
+  memberpriced: { kind: 'ok', message: 'This membership is now on its own rate.' },
+  badprice: { kind: 'bad', message: 'That is not a price. Use pounds and pence, for example 45.00.' },
+  nosub: { kind: 'bad', message: 'That member has no live membership to reprice.' },
 };
 
 /* -------------------------------------------------------------- overview -- */
@@ -377,7 +385,8 @@ masterRouter.get('/master/members/:id', async (req, res, next) => {
     if (!member) return next();
 
     const [sub, invoices, payments, consents, requests, bookings] = await Promise.all([
-      one(`SELECT s.*, p.name AS plan_name, p.price_pence
+      one(`SELECT s.*, p.name AS plan_name, p.code AS plan_code,
+                  p.price_pence AS list_price_pence
              FROM subscriptions s JOIN plans p ON p.id = s.plan_id
             WHERE s.member_id = $1 ORDER BY s.created_at DESC LIMIT 1`, [member.id]),
       query(`SELECT * FROM invoice_balances WHERE member_id = $1
@@ -481,6 +490,38 @@ masterRouter.get('/master/members/:id', async (req, res, next) => {
           <p class="tile__sub mono">${esc(shortDate(member.created_at))}</p>
         </div>
       </div>
+
+      ${sub ? card('Membership', `
+        <dl class="kv mono">
+          <div><dt>PLAN</dt><dd><a href="/master/plans#plan-${esc(sub.plan_id)}">${esc(sub.plan_name)}</a></dd></div>
+          <div><dt>PAYING</dt><dd>${esc(money(sub.price_pence))} <span class="muted">PER ${esc(sub.billing_interval).toUpperCase()}</span></dd></div>
+          <div><dt>LIST PRICE</dt><dd>${esc(money(sub.list_price_pence))}${sub.price_pence !== sub.list_price_pence
+            ? ` <span class="owed">${sub.price_pence < sub.list_price_pence ? 'HELD BELOW LIST' : 'ABOVE LIST'}</span>` : ''}</dd></div>
+          <div><dt>PERIOD ENDS</dt><dd>${esc(shortDate(sub.current_period_end))}</dd></div>
+          <div><dt>RENEWS</dt><dd>${sub.cancel_at_period_end ? 'NO, ENDS AT PERIOD END' : 'YES'}</dd></div>
+        </dl>
+        ${req.staff.role === 'admin' ? `
+        <form method="post" action="/master/members/${esc(member.id)}/price" class="raterow">
+          ${csrf(req.staff.csrf_token)}
+          <div class="f">
+            <label class="f__label mono" for="f-rate">SET THIS MEMBERSHIP'S OWN RATE</label>
+            <div class="price2__amt">
+              <span class="mono">£</span>
+              <input class="f__input" id="f-rate" name="price" type="text" inputmode="decimal"
+                     value="${(sub.price_pence / 100).toFixed(2)}" />
+            </div>
+          </div>
+          <div class="f">
+            <label class="f__label mono" for="f-rate-why">WHY</label>
+            <input class="f__input" id="f-rate-why" name="reason" type="text"
+                   placeholder="Concession, second family member, hardship" />
+          </div>
+          <button class="btn btn--sm btn--solid" type="submit">Set rate</button>
+        </form>
+        <p class="muted small">
+          A concession set here is theirs until somebody changes it. Raising the
+          plan does not overwrite it unless the change is applied to everyone.
+        </p>` : ''}`) : ''}
 
       ${card('Contact', `
         <dl class="kv mono">

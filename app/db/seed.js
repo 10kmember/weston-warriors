@@ -164,9 +164,11 @@ async function seed() {
     /* subscription */
     const periodStart = daysAgo(8);
     const [sub] = await query(
-      `INSERT INTO subscriptions (member_id, plan_id, status, started_at,
+      `INSERT INTO subscriptions (member_id, plan_id, price_pence, billing_interval,
+                                  status, started_at,
                                   current_period_start, current_period_end, created_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$4) RETURNING id`,
+       SELECT $1, p.id, p.price_pence, p.billing_interval, $3, $4, $5, $6, $4
+         FROM plans p WHERE p.id = $2 RETURNING id`,
       [member.id, planIds[m.plan], m.status, daysAgo(joined),
        periodStart, new Date(periodStart.getTime() + 30 * DAY)]
     );

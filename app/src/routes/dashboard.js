@@ -24,7 +24,7 @@ dashboardRouter.get('/dashboard', async (req, res, next) => {
       await Promise.all([
         one(
           `SELECT s.*, p.name AS plan_name, p.code AS plan_code,
-                  p.price_pence, p.billing_interval
+                  s.price_pence, s.billing_interval
              FROM subscriptions s
              JOIN plans p ON p.id = s.plan_id
             WHERE s.member_id = $1

@@ -78,6 +78,45 @@ Staff can read a participant's record but cannot edit their personal details.
 Rectification is the member's own right under Article 16 and stays on their
 profile.
 
+### Pricing
+
+`/master/plans` is where what the club charges is set: create a plan, rename
+one, edit what it includes, change the price, or stop offering it. Editing is
+admin only, the same bar as reversing a payment; a coach sees every number and
+changes none of them.
+
+The rule that makes the rest of it work: **a plan holds the price we sell at
+today, a subscription holds the price that member was signed up at.** They are
+two columns, not one, so putting a plan up prices nobody by accident.
+
+Every price change therefore asks one question in the same form:
+
+| Applied to | What happens |
+| --- | --- |
+| **New members only** | Only the plan moves. Everybody already on it keeps paying what they pay. |
+| **Everyone on this plan** | Current memberships move too, and it lands at their next renewal. Invoices already issued keep their own totals. |
+
+Either way the change is written to `plan_price_changes` with the old price, the
+new one, how it applied, how many memberships moved, who did it and why. "Who
+put the juniors up to £40, and when" is a question that gets asked months later.
+
+Two consequences worth having:
+
+- **Concessions are a supported state.** Set one membership's own rate from the
+  participant's record with a reason attached: hardship, second family member,
+  a deal somebody did at the door. It survives a plan increase unless that
+  increase is applied to everyone. The pricing page lists everybody held on a
+  rate that is not the list price, with one click to move them back, so a
+  concession lives in a column rather than in somebody's memory.
+- **The month is booked at what people actually pay.** The `plan_rollup` view
+  sums subscription prices, not list prices, so a plan sold at £45 with half
+  its members on £35 reports the number that pays the rent.
+
+The marketing site's price list follows this automatically when the platform is
+serving it: the page ships with prices in the markup, then asks `/api/plans` and
+corrects itself. On a static host with no server behind it, the authored markup
+stands.
+
 ### Avatars
 
 Members pick from ten faces and cannot upload anything. That is a product
@@ -105,6 +144,7 @@ src/routes/dashboard.js  overview, class timetable and booking
 src/routes/account.js    membership, billing, invoices, profile
 src/routes/privacy.js    consent, export, erasure, security
 src/routes/master.js     staff dashboard: counts, shortfall, reconciliation
+src/routes/master-pricing.js  plans, price changes, concessions
 src/staff-auth.js        staff sessions, separate from members entirely
 src/views/master-layout.js  the staff shell and its own sign in page
 db/migrations/       schema

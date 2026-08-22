@@ -48,6 +48,11 @@ There are three doors:
 | `/dashboard` | members | `/signin` |
 | `/master` | staff | `/master/signin`, a separate page and a separate table |
 
+Staff set prices at `/master/plans`. The tier prices on the front page are in
+the markup so a static deploy reads correctly on its own, and are corrected from
+`/api/plans` when the platform is the thing serving the page, so changing a
+price in one place changes it everywhere.
+
 ## Structure
 
 ```
@@ -57,7 +62,7 @@ assets/js/main.js             entry point; wires subsystems, degrades each one
 assets/js/scene.js            scroll-driven backdrop: particle morph shaders
 assets/js/sparring.js         section 04: two particle rigs, IK, punch script
 assets/js/audio.js            Web Audio drone and synthesised impact SFX
-assets/js/ui.js               scroll, reveals, counters, boot, cursor, nav, form
+assets/js/ui.js               scroll, reveals, counters, boot, cursor, nav, form, prices
 assets/css/dashboard.css      member dashboard styles, extends the tokens above
 assets/avatars/               ten default member avatars, plus their manifest
 tools/make-avatars.mjs        generates the avatar set
@@ -176,8 +181,9 @@ national titles, gold at 57kg at the 2024 World Under-19 Championships, 6-0 with
 5 knockouts as a professional under Matchroom).
 
 Still placeholder, and worth replacing before this goes anywhere public: the
-other three roster fighters, the membership tiers and prices, the capacity
-numbers, and the training-load chart. The enquiry form validates and reports
+other three roster fighters, the capacity numbers, and the training-load chart.
+The membership tiers and prices are placeholders too, but they are now edited
+from `/master/plans` rather than in this file. The enquiry form validates and reports
 locally but posts nowhere. Wire `initForm` in `assets/js/ui.js` to your endpoint.
 
 ## Credits

@@ -264,7 +264,7 @@ privacyRouter.get('/dashboard/privacy/export.json', async (req, res, next) => {
                FROM members WHERE id = $1`, [memberId]),
         query(`SELECT s.id, s.status, s.started_at, s.current_period_start, s.current_period_end,
                       s.cancel_at_period_end, s.cancelled_at, p.code AS plan_code, p.name AS plan_name,
-                      p.price_pence
+                      s.price_pence, s.billing_interval
                  FROM subscriptions s JOIN plans p ON p.id = s.plan_id
                 WHERE s.member_id = $1 ORDER BY s.created_at`, [memberId]),
         query('SELECT * FROM invoices WHERE member_id = $1 ORDER BY issued_at', [memberId]),

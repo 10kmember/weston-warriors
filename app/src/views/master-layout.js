@@ -13,6 +13,7 @@ const NAV = [
   ['/master', 'Overview', 'M3 12h7V3H3v9Zm0 9h7v-7H3v7Zm11 0h7V12h-7v9Zm0-18v7h7V3h-7Z'],
   ['/master/members', 'Participants', 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 21a7 7 0 0 1 14 0M17 11a3 3 0 1 0 0-6M22 21a5 5 0 0 0-4-4.9'],
   ['/master/reconciliation', 'Reconciliation', 'M4 4h16v16H4zM8 9h8M8 13h8M8 17h4'],
+  ['/master/plans', 'Pricing', 'M12 2v20M17 6.5c0-2-2.2-3-5-3s-5 .9-5 2.9 2.4 2.6 5 3.1 5 1.1 5 3.1-2.2 3-5 3-5-1-5-3'],
 ];
 
 export function masterPage({ title, body, staff, active = '', flash = null }) {

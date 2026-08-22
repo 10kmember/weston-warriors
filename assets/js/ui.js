@@ -299,6 +299,47 @@ function escapeHtml(value) {
 
 /* ------------------------------------------------------------------- form -- */
 
+/**
+ * Keep the public price list honest.
+ *
+ * Prices are in the markup, so a static deploy reads correctly with no
+ * JavaScript and no server. When the member platform is the thing serving this
+ * page, it also has the live prices, and a coach who puts a plan up in /master
+ * should not have to remember to edit an HTML file as well. If the endpoint is
+ * not there, or answers with anything unexpected, the authored markup stands.
+ */
+export function initPricing() {
+  const tiers = document.querySelectorAll('[data-plan]');
+  if (!tiers.length) return;
+
+  fetch('/api/plans', { headers: { Accept: 'application/json' } })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((data) => {
+      if (!data || !Array.isArray(data.plans)) return;
+      const byCode = new Map(data.plans.map((p) => [p.code, p]));
+
+      tiers.forEach((tier) => {
+        const plan = byCode.get(tier.dataset.plan);
+        const slot = tier.querySelector('[data-plan-price]');
+        if (!plan || !slot || !Number.isFinite(plan.price_pence)) return;
+
+        // Whole pounds on the front page: the tiers are set in a display face
+        // and ".00" on every one of them is noise rather than precision.
+        const pounds = plan.price_pence / 100;
+        slot.textContent = Number.isInteger(pounds)
+          ? String(pounds)
+          : pounds.toFixed(2);
+
+        const per = tier.querySelector('.tier__per');
+        if (per) per.textContent = plan.billing_interval === 'year' ? '/YR' : '/MO';
+
+        const name = tier.querySelector('.tier__name');
+        if (name && plan.name) name.textContent = plan.name;
+      });
+    })
+    .catch(() => { /* static host, offline, blocked: the markup is the answer */ });
+}
+
 export function initForm() {
   const form = document.getElementById('enquire-form');
   const status = document.getElementById('form-status');

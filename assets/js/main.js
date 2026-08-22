@@ -12,7 +12,7 @@ import { initScene } from './scene.js';
 import { initSparring } from './sparring.js';
 import {
   initBoot, initScroll, initReveals, initCursor, initForm, initNav,
-  initAudioToggle, initAccountMenu, prefersReducedMotion,
+  initAudioToggle, initAccountMenu, initPricing, prefersReducedMotion,
 } from './ui.js';
 
 const reduceMotion = prefersReducedMotion();
@@ -26,6 +26,7 @@ initCursor();
 initForm();
 initNav();
 initAccountMenu();
+initPricing();
 
 /* ---------------------------------------------------------------- audio -- */
 

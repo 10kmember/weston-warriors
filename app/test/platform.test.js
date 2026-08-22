@@ -231,5 +231,75 @@ test('staff and member sessions are separate systems', async () => {
   await query('DELETE FROM members WHERE id = $1', [member.id]);
 });
 
+/* -------------------------------------------------------------- pricing -- */
+
+test('a plan code is safe to put in a url and unique-able', async () => {
+  const { slug } = await import('../src/routes/master-pricing.js');
+
+  assert.equal(slug('Juniors'), 'juniors');
+  assert.equal(slug('Over 50s Fitness'), 'over-50s-fitness');
+  assert.equal(slug('  Pay As You Go  '), 'pay-as-you-go');
+  assert.equal(slug('Women\u2019s Only!'), 'women-s-only');
+  assert.equal(slug('../../etc/passwd'), 'etc-passwd');
+  assert.equal(slug('<script>'), 'script');
+  assert.equal(slug('!!!'), '');
+});
+
+test('plan features come in as lines and go out as a bounded list', async () => {
+  const { featureList } = await import('../src/routes/master-pricing.js');
+
+  assert.deepEqual(featureList('One\nTwo\n\n  Three  '), ['One', 'Two', 'Three']);
+  assert.deepEqual(featureList(''), []);
+  assert.deepEqual(featureList(null), []);
+  assert.equal(featureList(Array.from({ length: 40 }, (_, i) => `f${i}`).join('\n')).length, 12);
+});
+
+test('the plan rollup counts what members pay, not the list price', async () => {
+  const stamp = Date.now();
+  const plan = await one(
+    `INSERT INTO plans (code, name, price_pence, billing_interval)
+     VALUES ($1, 'Rollup Test', 10000, 'month') RETURNING id`,
+    [`rollup-test-${stamp}`]
+  );
+  const member = await one(
+    `INSERT INTO members (email, password_hash, first_name)
+     VALUES ($1, 'x', 'Rollup') RETURNING id`,
+    [`rollup-${stamp}@example.com`]
+  );
+
+  // signed up at a concession: half the list price
+  await query(
+    `INSERT INTO subscriptions (member_id, plan_id, price_pence, billing_interval,
+                                status, current_period_start, current_period_end)
+     VALUES ($1, $2, 5000, 'month', 'active', now(), now() + interval '1 month')`,
+    [member.id, plan.id]
+  );
+
+  let row = await one('SELECT * FROM plan_rollup WHERE plan_id = $1', [plan.id]);
+  assert.equal(row.list_price_pence, 10000, 'the plan still lists at £100');
+  assert.equal(row.subscribers, 1);
+  assert.equal(row.off_list_price, 1, 'and the member is flagged as off the list price');
+  assert.equal(row.monthly_pence, 5000, 'but the month is worth what they actually pay');
+
+  // a cancelled membership is worth nothing and is not a subscriber
+  await query(`UPDATE subscriptions SET status = 'cancelled' WHERE plan_id = $1`, [plan.id]);
+  row = await one('SELECT * FROM plan_rollup WHERE plan_id = $1', [plan.id]);
+  assert.equal(row.subscribers, 0);
+  assert.equal(row.monthly_pence, 0);
+
+  // an annual membership is counted at a twelfth per month
+  await query(
+    `UPDATE subscriptions SET status = 'active', billing_interval = 'year', price_pence = 60000
+      WHERE plan_id = $1`,
+    [plan.id]
+  );
+  row = await one('SELECT * FROM plan_rollup WHERE plan_id = $1', [plan.id]);
+  assert.equal(row.monthly_pence, 5000, '£600 a year is £50 a month');
+
+  await query('DELETE FROM subscriptions WHERE plan_id = $1', [plan.id]);
+  await query('DELETE FROM members WHERE id = $1', [member.id]);
+  await query('DELETE FROM plans WHERE id = $1', [plan.id]);
+});
+
 // Closes the pool once every test above has run.
 test.after(async () => { await pool.end(); });
