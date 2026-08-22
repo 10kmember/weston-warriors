@@ -1,8 +1,8 @@
 /**
- * The staff shell.
+ * The admin shell.
  *
  * Visually related to the member dashboard but never mistakable for it: a
- * bronze rule across the top, a STAFF marker beside the logo, and its own
+ * bronze rule across the top, an ADMIN marker beside the logo, and its own
  * navigation. Somebody glancing at a screen should know instantly whether they
  * are looking at their own account or at everybody's.
  */
@@ -16,7 +16,7 @@ const NAV = [
   ['/master/plans', 'Pricing', 'M12 2v20M17 6.5c0-2-2.2-3-5-3s-5 .9-5 2.9 2.4 2.6 5 3.1 5 1.1 5 3.1-2.2 3-5 3-5-1-5-3'],
 ];
 
-export function masterPage({ title, body, staff, active = '', flash = null }) {
+export function masterPage({ title, body, admin, active = '', flash = null }) {
   const nav = NAV.map(([href, label, d]) => `
     <a class="side__link${href === active ? ' is-active' : ''}" href="${href}">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg>
@@ -37,9 +37,9 @@ export function masterPage({ title, body, staff, active = '', flash = null }) {
 <link rel="stylesheet" href="/assets/css/dashboard.css" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230A0A0A'/%3E%3Cg fill='none' stroke='%238C5A2B' stroke-width='2.2' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M3 9l3 14 3-9 3 9 3-14'/%3E%3Cpath d='M17 9l3 14 3-9 3 9 3-14'/%3E%3C/g%3E%3C/svg%3E" />
 </head>
-<body class="app app--staff">
+<body class="app app--admin">
 <a class="skip-link" href="#main">Skip to content</a>
-<div class="staffbar" aria-hidden="true"></div>
+<div class="adminbar" aria-hidden="true"></div>
 
 <header class="topbar">
   <a class="topbar__brand" href="/master">
@@ -51,9 +51,9 @@ export function masterPage({ title, body, staff, active = '', flash = null }) {
   </a>
 
   <div class="topbar__right">
-    <span class="staffpill mono">MASTER <s>·</s> STAFF</span>
+    <span class="adminpill mono">MASTER <s>·</s> ADMIN</span>
     <div class="who">
-      <span class="who__name mono">${esc(staff.name || staff.email)} <s>·</s> ${esc(staff.role).toUpperCase()}</span>
+      <span class="who__name mono">${esc(admin.name || admin.email)}</span>
     </div>
   </div>
 </header>
@@ -64,7 +64,7 @@ export function masterPage({ title, body, staff, active = '', flash = null }) {
   <nav class="side" id="side" aria-label="Master dashboard">
     ${nav}
     <form class="side__out" method="post" action="/master/signout">
-      <input type="hidden" name="_csrf" value="${esc(staff.csrf_token)}" />
+      <input type="hidden" name="_csrf" value="${esc(admin.csrf_token)}" />
       <button class="side__link side__link--out" type="submit">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5v16h5M15 8l4 4-4 4M19 12H9"/></svg>
         <span>Sign out</span>
@@ -93,14 +93,14 @@ export function masterPage({ title, body, staff, active = '', flash = null }) {
 </html>`;
 }
 
-/** The staff sign in page: a different page from the member one, on purpose. */
+/** The admin sign in page: a different page from the member one, on purpose. */
 export function masterSigninPage({ email = '', error = '', next = '' }) {
   return `<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Staff sign in · Weston Warriors</title>
+<title>Admin sign in · Weston Warriors</title>
 <meta name="robots" content="noindex, nofollow" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -108,13 +108,13 @@ export function masterSigninPage({ email = '', error = '', next = '' }) {
 <link rel="stylesheet" href="/assets/css/main.css" />
 <link rel="stylesheet" href="/assets/css/dashboard.css" />
 </head>
-<body class="app app--bare app--staff">
-<div class="staffbar" aria-hidden="true"></div>
-<div class="gate gate--staff">
-  <p class="gate__eyebrow mono">STAFF ONLY <s>//</s> MASTER DASHBOARD</p>
-  <h1 class="gate__title">Staff Sign In</h1>
+<body class="app app--bare app--admin">
+<div class="adminbar" aria-hidden="true"></div>
+<div class="gate gate--admin">
+  <p class="gate__eyebrow mono">ADMIN ONLY <s>//</s> MASTER DASHBOARD</p>
+  <h1 class="gate__title">Admin Sign In</h1>
   <p class="gate__lede">
-    This is the coaches' door. Members sign in at
+    This is the admin door. Members sign in at
     <a href="/signin">the member entrance</a> instead.
   </p>
 
@@ -123,7 +123,7 @@ export function masterSigninPage({ email = '', error = '', next = '' }) {
   <form method="post" action="/master/signin" class="gate__form" novalidate>
     <input type="hidden" name="next" value="${esc(next)}" />
     <div class="f">
-      <label class="f__label mono" for="f-email">STAFF EMAIL</label>
+      <label class="f__label mono" for="f-email">ADMIN EMAIL</label>
       <input class="f__input" id="f-email" name="email" type="email"
              value="${esc(email)}" required autocomplete="username" />
     </div>

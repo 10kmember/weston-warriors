@@ -1,6 +1,11 @@
 /**
  * Migration runner. Applies every .sql file in db/migrations that is not
  * already recorded in schema_migrations, in filename order.
+ *
+ * The runner owns the transaction and the bookkeeping. A migration file is
+ * therefore only ever schema, and a file that forgets to record itself cannot
+ * exist: that mistake reapplies the migration on every deploy until something
+ * collides, which is a bad way to find out.
  */
 
 import fs from 'node:fs/promises';
@@ -31,7 +36,18 @@ export async function migrate() {
       if (done.has(version)) continue;
       const sql = await fs.readFile(path.join(dir, file), 'utf8');
       process.stdout.write(`  applying ${version} … `);
-      await client.query(sql);
+      try {
+        await client.query('BEGIN');
+        await client.query(sql);
+        await client.query(
+          'INSERT INTO schema_migrations (version) VALUES ($1) ON CONFLICT DO NOTHING',
+          [version]
+        );
+        await client.query('COMMIT');
+      } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+      }
       console.log('done');
       ran += 1;
     }

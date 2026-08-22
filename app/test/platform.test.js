@@ -203,14 +203,14 @@ test('money parsing refuses anything that is not money', async () => {
   }
 });
 
-test('staff and member sessions are separate systems', async () => {
-  const { loadStaffSession, createStaffSession } = await import('../src/staff-auth.js');
+test('admin and member sessions are separate systems', async () => {
+  const { loadAdminSession, createAdminSession } = await import('../src/admin-auth.js');
   const { loadSession, createSession } = await import('../src/auth.js');
 
-  const staff = await one(
-    `INSERT INTO staff_users (email, password_hash, name, role)
-     VALUES ($1, 'x', 'Test Staff', 'coach') RETURNING id`,
-    [`staff-test-${Date.now()}@example.com`]
+  const admin = await one(
+    `INSERT INTO admins (email, password_hash, name)
+     VALUES ($1, 'x', 'Test Admin') RETURNING id`,
+    [`admin-test-${Date.now()}@example.com`]
   );
   const member = await one(
     `INSERT INTO members (email, password_hash, first_name)
@@ -218,16 +218,16 @@ test('staff and member sessions are separate systems', async () => {
     [`member-test-${Date.now()}@example.com`]
   );
 
-  const staffSession = await createStaffSession(staff.id, { ip: null, userAgent: '' });
+  const adminSession = await createAdminSession(admin.id, { ip: null, userAgent: '' });
   const memberSession = await createSession(member.id, { ip: null, userAgent: '' });
 
   // each token works only in its own system
-  assert.ok(await loadStaffSession(staffSession.raw), 'staff token should open a staff session');
-  assert.equal(await loadSession(staffSession.raw), null, 'a staff token must not be a member session');
+  assert.ok(await loadAdminSession(adminSession.raw), 'admin token should open an admin session');
+  assert.equal(await loadSession(adminSession.raw), null, 'an admin token must not be a member session');
   assert.ok(await loadSession(memberSession.raw), 'member token should open a member session');
-  assert.equal(await loadStaffSession(memberSession.raw), null, 'a member token must not be a staff session');
+  assert.equal(await loadAdminSession(memberSession.raw), null, 'a member token must not be an admin session');
 
-  await query('DELETE FROM staff_users WHERE id = $1', [staff.id]);
+  await query('DELETE FROM admins WHERE id = $1', [admin.id]);
   await query('DELETE FROM members WHERE id = $1', [member.id]);
 });
 

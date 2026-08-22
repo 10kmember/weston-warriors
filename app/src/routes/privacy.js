@@ -6,7 +6,7 @@
  *   Art. 15  Access          — the account activity log and the export
  *   Art. 16  Rectification   — /dashboard/profile
  *   Art. 17  Erasure         — request, 30 day grace, then anonymisation
- *   Art. 18  Restriction     — request recorded for staff to action
+ *   Art. 18  Restriction     — request recorded for an admin to action
  *   Art. 20  Portability     — machine-readable JSON export
  *   Art. 21  Objection       — request recorded, marketing stops immediately
  *   Art. 7   Consent         — granular, withdrawable, evidenced by a ledger
@@ -259,7 +259,7 @@ privacyRouter.get('/dashboard/privacy/export.json', async (req, res, next) => {
         one(`SELECT id, email, first_name, last_name, phone, date_of_birth,
                     address_line1, address_line2, city, postcode,
                     emergency_contact_name, emergency_contact_phone, medical_notes,
-                    status, role, created_at, updated_at, last_login_at,
+                    status, created_at, updated_at, last_login_at,
                     email_verified_at, erasure_requested_at
                FROM members WHERE id = $1`, [memberId]),
         query(`SELECT s.id, s.status, s.started_at, s.current_period_start, s.current_period_end,
@@ -347,7 +347,7 @@ privacyRouter.post('/dashboard/privacy/request', requireCsrf, async (req, res, n
         [memberId, type, 'Raised from the member dashboard']
       );
       // An objection to direct marketing is absolute: stop immediately rather
-      // than making the member wait on a staff review.
+      // than making the member wait on an admin review.
       if (type === 'objection') {
         for (const purpose of ['marketing_email', 'marketing_sms', 'third_party_sharing']) {
           await tx.query(

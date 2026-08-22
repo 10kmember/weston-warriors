@@ -48,16 +48,21 @@ past to reach the one you care about.
 
 ### The master dashboard
 
-Staff have their own area at **`/master`**, behind **its own sign in page** at
+Admins have their own area at **`/master`**, behind **its own sign in page** at
 `/master/signin`. It is not the member sign in page with a role check bolted on:
-staff are a separate table with separate sessions and a cookie scoped to
+admins are a separate table with separate sessions and a cookie scoped to
 `/master`, so a member's browser never even sends a credential there. A member
-session that navigates to `/master` is bounced to the staff door.
+session that navigates to `/master` is bounced to the admin door.
 
-| Email | Password | Role |
-| --- | --- | --- |
-| `dean@westonwarriors.example` | `MasterFloor2026` | admin |
-| `simon@westonwarriors.example` | `MasterFloor2026` | coach |
+There are two kinds of account in this system and no more: **members and
+admins**. Every admin can do everything an admin can do. There is no second
+tier that sees the numbers but may not touch them, because the club does not
+work that way and a tier like that means writing half this dashboard twice.
+
+| Email | Password |
+| --- | --- |
+| `dean@westonwarriors.example` | `MasterFloor2026` |
+| `simon@westonwarriors.example` | `MasterFloor2026` |
 
 It answers what a club asks on a Monday morning:
 
@@ -70,20 +75,18 @@ It answers what a club asks on a Monday morning:
   outstanding amount pre-filled
 
 Reconciliation is append-only. Recording a payment writes a row stamped with the
-member of staff who took it. Correcting a mistake writes a **reversal** rather
-than editing or deleting the original, and reversals are admin only. Clearing
+admin who took it. Correcting a mistake writes a **reversal** rather
+than editing or deleting the original, never an edit or a delete. Clearing
 an invoice in full also lifts the membership back out of `past_due`.
 
-Staff can read a participant's record but cannot edit their personal details.
+Admins can read a participant's record but cannot edit their personal details.
 Rectification is the member's own right under Article 16 and stays on their
 profile.
 
 ### Pricing
 
 `/master/plans` is where what the club charges is set: create a plan, rename
-one, edit what it includes, change the price, or stop offering it. Editing is
-admin only, the same bar as reversing a payment; a coach sees every number and
-changes none of them.
+one, edit what it includes, change the price, or stop offering it.
 
 The rule that makes the rest of it work: **a plan holds the price we sell at
 today, a subscription holds the price that member was signed up at.** They are
@@ -143,10 +146,10 @@ src/routes/auth.js       sign up, sign in, sign out
 src/routes/dashboard.js  overview, class timetable and booking
 src/routes/account.js    membership, billing, invoices, profile
 src/routes/privacy.js    consent, export, erasure, security
-src/routes/master.js     staff dashboard: counts, shortfall, reconciliation
+src/routes/master.js     admin dashboard: counts, shortfall, reconciliation
 src/routes/master-pricing.js  plans, price changes, concessions
-src/staff-auth.js        staff sessions, separate from members entirely
-src/views/master-layout.js  the staff shell and its own sign in page
+src/admin-auth.js        admin sessions, separate from members entirely
+src/views/master-layout.js  the admin shell and its own sign in page
 db/migrations/       schema
 db/seed.js           test data
 test/                unit tests
@@ -171,10 +174,11 @@ test/                unit tests
 - **Card numbers** are never accepted or stored. `payment_methods` holds a
   processor token and the display fragments a processor hands back.
 - **Login throttling** per IP, plus a per-account lockout after eight failures.
-- **Staff are a separate system**, not a role column: separate table, separate
+- **Admins are a separate system**, not a role column: separate table, separate
   sessions, separate cookie scoped to `/master`, a tighter lockout after five
   failures and a seven day session instead of thirty. There is no flag on a
-  member row that could be flipped to gain staff access.
+  member row that could be flipped to gain admin access, because there is no
+  such flag: `members` has no role column at all.
 
 Not done, and worth doing before real members use it: email verification and
 password reset (both need a mail provider), a real payment processor, and
@@ -191,7 +195,7 @@ address:
 | Access (Art. 15) | Account activity log, and the export |
 | Rectification (Art. 16) | Profile, editable by the member |
 | Erasure (Art. 17) | Request, 30 day grace, then anonymisation |
-| Restriction (Art. 18) | Request recorded for staff |
+| Restriction (Art. 18) | Request recorded for an admin |
 | Portability (Art. 20) | JSON export of the complete record |
 | Objection (Art. 21) | Request recorded; marketing stops immediately |
 | Consent (Art. 7) | Granular, withdrawable, evidenced by a ledger |

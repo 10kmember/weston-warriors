@@ -455,22 +455,22 @@ textarea.f__input { resize: vertical; }
 
 /* ========================================================== master (staff) */
 /* Related to the member dashboard but never mistakable for it. */
-.app--staff { --accent: var(--bronze); }
-.staffbar {
+.app--admin { --accent: var(--bronze); }
+.adminbar {
   position: sticky; top: 0; z-index: 45;
   height: 3px;
   background: linear-gradient(90deg, var(--bronze), var(--ember), var(--bronze));
 }
-.app--staff .topbar { top: 3px; }
-.staffpill {
+.app--admin .topbar { top: 3px; }
+.adminpill {
   padding: .3rem .6rem;
   color: var(--bronze);
   border: 1px solid var(--hair-warm);
   font-size: .55rem;
 }
-.app--staff .side__link.is-active { border-left-color: var(--bronze); }
-.gate--staff { max-width: 24rem; }
-.gate--staff .gate__eyebrow { color: var(--bronze); }
+.app--admin .side__link.is-active { border-left-color: var(--bronze); }
+.gate--admin { max-width: 24rem; }
+.gate--admin .gate__eyebrow { color: var(--bronze); }
 
 /* a face beside a name, used all through the staff tables */
 .who2 { display: flex; align-items: center; gap: .55rem; }

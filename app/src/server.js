@@ -79,7 +79,7 @@ app.get('/api/session', (req, res) => {
  *
  * The marketing page ships with prices in the markup so it still reads
  * correctly on a static host with no server behind it. Where this app is the
- * one serving it, the page asks here and corrects itself, so a price a coach
+ * one serving it, the page asks here and corrects itself, so a price an admin
  * changes in /master does not leave a stale number on the front page.
  */
 app.get('/api/plans', async (req, res, next) => {
@@ -141,7 +141,7 @@ app.use(express.static(repoRoot, {
 /**
  * Not found.
  *
- * Inside the dashboard or the staff area a member is mid-task and wants their
+ * Inside the dashboard or the admin area somebody is mid-task and wants their
  * own navigation back, so they get the shell they were already in. Everywhere
  * else gets 404.html from the repository root, which is the same page a static
  * host serves, so the site has one 404 rather than two that drift apart.
@@ -174,7 +174,7 @@ app.use((err, req, res, next) => {  // eslint-disable-line no-unused-vars
   const status = res.statusCode >= 400 ? res.statusCode : 500;
   if (status >= 500) console.error('[error]', err);
 
-  // Staff pages get the staff shell, and never leak a member's name into it.
+  // Admin pages get the admin shell, and never leak a member's name into it.
   if (req.path.startsWith('/master')) {
     return res.status(status).send(masterSigninPage({
       error: status >= 500

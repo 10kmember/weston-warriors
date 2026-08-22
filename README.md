@@ -53,9 +53,9 @@ There are three doors:
 | --- | --- | --- |
 | `/` | anyone | no account needed |
 | `/dashboard` | members | `/signin` |
-| `/master` | staff | `/master/signin`, a separate page and a separate table |
+| `/master` | admins | `/master/signin`, a separate page and a separate table |
 
-Staff set prices at `/master/plans`. The tier prices on the front page are in
+Admins set prices at `/master/plans`. The tier prices on the front page are in
 the markup so a static deploy reads correctly on its own, and are corrected from
 `/api/plans` when the platform is the thing serving the page, so changing a
 price in one place changes it everywhere.

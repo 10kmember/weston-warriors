@@ -1,5 +1,5 @@
 /**
- * The master dashboard: everybody's account, seen from the coaches' side.
+ * The master dashboard: everybody's account, seen from the club's side.
  *
  * Answers the four questions a club actually asks on a Monday morning:
  *   how many participants are we carrying,
@@ -8,7 +8,7 @@
  *   and can I put last night's cash against the right invoice.
  *
  * Reconciliation is append-only. Recording a cash payment writes a payment row
- * attributed to the member of staff who took it; correcting a mistake writes a
+ * attributed to the admin who took it; correcting a mistake writes a
  * reversal, it does not edit or delete the original. Cash handling is exactly
  * where an audit trail earns its keep.
  */
@@ -16,11 +16,11 @@
 import express from 'express';
 import { query, one, transaction } from '../db.js';
 import {
-  attachStaff, requireStaff, requireStaffGuest, requireStaffCsrf, requireAdmin,
-  createStaffSession, setStaffCookie, clearStaffCookie, revokeStaffSession,
-  verifyStaffPassword, burnPasswordTime, throttleStaffLogin,
-  recordStaffFailure, clearStaffAttempts, staffAudit,
-} from '../staff-auth.js';
+  attachAdmin, requireAdmin, requireAdminGuest, requireAdminCsrf,
+  createAdminSession, setAdminCookie, clearAdminCookie, revokeAdminSession,
+  verifyAdminPassword, burnPasswordTime, throttleAdminLogin,
+  recordAdminFailure, clearAdminAttempts, adminAudit,
+} from '../admin-auth.js';
 import { str } from '../validate.js';
 import { masterPage, masterSigninPage } from '../views/master-layout.js';
 import {
@@ -30,60 +30,60 @@ import { registerPricingRoutes } from './master-pricing.js';
 
 export const masterRouter = express.Router();
 
-// Staff cookie is scoped to /master, so this only ever runs here.
-masterRouter.use('/master', attachStaff);
+// The admin cookie is scoped to /master, so this only ever runs here.
+masterRouter.use('/master', attachAdmin);
 
 /* ---------------------------------------------------------------- sign in -- */
 
-masterRouter.get('/master/signin', requireStaffGuest, (req, res) => {
+masterRouter.get('/master/signin', requireAdminGuest, (req, res) => {
   res.send(masterSigninPage({ next: str(req.query.next, 200) }));
 });
 
-masterRouter.post('/master/signin', requireStaffGuest, throttleStaffLogin, async (req, res, next) => {
+masterRouter.post('/master/signin', requireAdminGuest, throttleAdminLogin, async (req, res, next) => {
   try {
     const email = str(req.body.email, 320).toLowerCase();
     const password = String(req.body.password || '');
     const target = str(req.body.next, 200);
 
-    const staff = await one(
-      'SELECT id, password_hash, status, locked_until FROM staff_users WHERE lower(email) = $1',
+    const admin = await one(
+      'SELECT id, password_hash, status, locked_until FROM admins WHERE lower(email) = $1',
       [email]
     );
 
     const reject = (message = 'Email or password is incorrect.') =>
       res.status(401).send(masterSigninPage({ email, next: target, error: message }));
 
-    if (!staff) { burnPasswordTime(password); recordStaffFailure(req); return reject(); }
-    if (staff.locked_until && new Date(staff.locked_until) > new Date()) {
+    if (!admin) { burnPasswordTime(password); recordAdminFailure(req); return reject(); }
+    if (admin.locked_until && new Date(admin.locked_until) > new Date()) {
       return res.status(429).send(masterSigninPage({
         email, next: target, error: 'This account is locked after repeated failures. Try again shortly.',
       }));
     }
-    if (staff.status !== 'active') return reject();
+    if (admin.status !== 'active') return reject();
 
-    if (!verifyStaffPassword(password, staff.password_hash)) {
-      recordStaffFailure(req);
+    if (!verifyAdminPassword(password, admin.password_hash)) {
+      recordAdminFailure(req);
       await query(
-        `UPDATE staff_users
+        `UPDATE admins
             SET failed_login_count = failed_login_count + 1,
                 locked_until = CASE WHEN failed_login_count + 1 >= 5
                                     THEN now() + interval '15 minutes' ELSE locked_until END
           WHERE id = $1`,
-        [staff.id]
+        [admin.id]
       );
       return reject();
     }
 
-    const session = await createStaffSession(staff.id, { ip: req.ip, userAgent: req.get('user-agent') });
-    setStaffCookie(res, session.raw, session.expiresAt);
-    clearStaffAttempts(req);
+    const session = await createAdminSession(admin.id, { ip: req.ip, userAgent: req.get('user-agent') });
+    setAdminCookie(res, session.raw, session.expiresAt);
+    clearAdminAttempts(req);
     await query(
-      'UPDATE staff_users SET last_login_at = now(), failed_login_count = 0, locked_until = NULL WHERE id = $1',
-      [staff.id]
+      'UPDATE admins SET last_login_at = now(), failed_login_count = 0, locked_until = NULL WHERE id = $1',
+      [admin.id]
     );
 
-    req.staff = { staff_id: staff.id };
-    await staffAudit(req, { action: 'staff.signin' });
+    req.admin = { admin_id: admin.id };
+    await adminAudit(req, { action: 'admin.signin' });
 
     const safe = target.startsWith('/master') ? target : '/master';
     res.redirect(safe);
@@ -94,19 +94,19 @@ masterRouter.post('/master/signin', requireStaffGuest, throttleStaffLogin, async
 
 masterRouter.post('/master/signout', async (req, res, next) => {
   try {
-    if (req.staff) {
-      await revokeStaffSession(req.staff.id);
-      await staffAudit(req, { action: 'staff.signout' });
+    if (req.admin) {
+      await revokeAdminSession(req.admin.id);
+      await adminAudit(req, { action: 'admin.signout' });
     }
-    clearStaffCookie(res);
+    clearAdminCookie(res);
     res.redirect('/master/signin');
   } catch (err) {
     next(err);
   }
 });
 
-// Everything past here needs a staff session.
-masterRouter.use('/master', requireStaff);
+// Everything past here needs an admin session.
+masterRouter.use('/master', requireAdmin);
 
 // Pricing lives in its own file but on this router, so it inherits the guard
 // above rather than declaring a second one that could drift out of step.
@@ -181,11 +181,11 @@ masterRouter.get('/master', async (req, res, next) => {
          LIMIT 12`),
       query(`
         SELECT pay.id, pay.amount_pence, pay.method, pay.status, pay.processed_at,
-               pay.reference, i.number, m.first_name, m.last_name, su.name AS staff_name
+               pay.reference, i.number, m.first_name, m.last_name, su.name AS admin_name
           FROM payments pay
           LEFT JOIN invoices i ON i.id = pay.invoice_id
           LEFT JOIN members m ON m.id = pay.member_id
-          LEFT JOIN staff_users su ON su.id = pay.recorded_by
+          LEFT JOIN admins su ON su.id = pay.recorded_by
          ORDER BY pay.processed_at DESC
          LIMIT 8`),
       one(`
@@ -231,7 +231,7 @@ masterRouter.get('/master', async (req, res, next) => {
             <td>${esc(p.first_name || '')} ${esc(p.last_name || '')}</td>
             <td class="mono">${esc(p.number || '—')}</td>
             <td class="mono">${esc(p.method.replace(/_/g, ' '))}</td>
-            <td class="mono muted">${esc(p.staff_name || 'processor')}</td>
+            <td class="mono muted">${esc(p.admin_name || 'processor')}</td>
             <td>${statusPill(p.status)}</td>
             <td class="num">${esc(money(p.amount_pence))}</td>
           </tr>`).join('')}</tbody>
@@ -246,7 +246,7 @@ masterRouter.get('/master', async (req, res, next) => {
 
     res.send(masterPage({
       title: 'Overview',
-      staff: req.staff,
+      admin: req.admin,
       active: '/master',
       flash: FLASH[req.query.done] || null,
       body: `
@@ -327,7 +327,7 @@ masterRouter.get('/master/members', async (req, res, next) => {
 
     res.send(masterPage({
       title: 'Participants',
-      staff: req.staff,
+      admin: req.admin,
       active: '/master/members',
       body: `
       <header class="head">
@@ -391,9 +391,9 @@ masterRouter.get('/master/members/:id', async (req, res, next) => {
             WHERE s.member_id = $1 ORDER BY s.created_at DESC LIMIT 1`, [member.id]),
       query(`SELECT * FROM invoice_balances WHERE member_id = $1
               ORDER BY issued_at DESC LIMIT 24`, [member.id]),
-      query(`SELECT pay.*, su.name AS staff_name, i.number
+      query(`SELECT pay.*, su.name AS admin_name, i.number
                FROM payments pay
-               LEFT JOIN staff_users su ON su.id = pay.recorded_by
+               LEFT JOIN admins su ON su.id = pay.recorded_by
                LEFT JOIN invoices i ON i.id = pay.invoice_id
               WHERE pay.member_id = $1 ORDER BY pay.processed_at DESC LIMIT 20`, [member.id]),
       query('SELECT purpose, granted, created_at FROM current_consents WHERE member_id = $1', [member.id]),
@@ -437,12 +437,12 @@ masterRouter.get('/master/members/:id', async (req, res, next) => {
             <td class="mono">${esc(p.number || '—')}</td>
             <td class="mono">${esc(p.method.replace(/_/g, ' '))}</td>
             <td class="mono muted">${esc(p.reference || '—')}${p.note ? `<br /><small>${esc(p.note)}</small>` : ''}</td>
-            <td class="mono muted">${esc(p.staff_name || 'processor')}</td>
+            <td class="mono muted">${esc(p.admin_name || 'processor')}</td>
             <td>${statusPill(p.status)}</td>
             <td class="num">${esc(money(p.amount_pence))}</td>
-            <td class="num">${p.status === 'succeeded' && req.staff.role === 'admin' ? `
+            <td class="num">${p.status === 'succeeded' ? `
               <form method="post" action="/master/payments/${esc(p.id)}/reverse" class="inline">
-                ${csrf(req.staff.csrf_token)}
+                ${csrf(req.admin.csrf_token)}
                 <button class="btn btn--sm btn--danger" type="submit">Reverse</button>
               </form>` : ''}</td>
           </tr>`).join('')}</tbody>
@@ -450,7 +450,7 @@ masterRouter.get('/master/members/:id', async (req, res, next) => {
 
     res.send(masterPage({
       title: `${member.first_name} ${member.last_name}`,
-      staff: req.staff,
+      admin: req.admin,
       active: '/master/members',
       flash: FLASH[req.query.done] || null,
       body: `
@@ -500,9 +500,8 @@ masterRouter.get('/master/members/:id', async (req, res, next) => {
           <div><dt>PERIOD ENDS</dt><dd>${esc(shortDate(sub.current_period_end))}</dd></div>
           <div><dt>RENEWS</dt><dd>${sub.cancel_at_period_end ? 'NO, ENDS AT PERIOD END' : 'YES'}</dd></div>
         </dl>
-        ${req.staff.role === 'admin' ? `
         <form method="post" action="/master/members/${esc(member.id)}/price" class="raterow">
-          ${csrf(req.staff.csrf_token)}
+          ${csrf(req.admin.csrf_token)}
           <div class="f">
             <label class="f__label mono" for="f-rate">SET THIS MEMBERSHIP'S OWN RATE</label>
             <div class="price2__amt">
@@ -521,7 +520,7 @@ masterRouter.get('/master/members/:id', async (req, res, next) => {
         <p class="muted small">
           A concession set here is theirs until somebody changes it. Raising the
           plan does not overwrite it unless the change is applied to everyone.
-        </p>` : ''}`) : ''}
+        </p>`) : ''}
 
       ${card('Contact', `
         <dl class="kv mono">
@@ -532,7 +531,7 @@ masterRouter.get('/master/members/:id', async (req, res, next) => {
           <div><dt>MEDICAL NOTES</dt><dd>${member.medical_notes ? esc(member.medical_notes) : '<span class="muted">none recorded</span>'}</dd></div>
         </dl>
         <p class="muted small">
-          Staff can read this record but cannot edit a participant's own details
+          Admins can read this record but cannot edit a participant's own details
           from here. Corrections belong to the member, under Article 16, and they
           make them from their own profile.
         </p>`)}
@@ -600,7 +599,7 @@ masterRouter.get('/master/reconciliation', async (req, res, next) => {
         </div>
 
         <form class="recon__form" method="post" action="/master/invoices/${esc(i.invoice_id)}/payments">
-          ${csrf(req.staff.csrf_token)}
+          ${csrf(req.admin.csrf_token)}
           <label class="sr-only" for="amt-${esc(i.invoice_id)}">Amount received</label>
           <input class="f__input" id="amt-${esc(i.invoice_id)}" name="amount" type="text" inputmode="decimal"
                  value="${(i.outstanding_pence / 100).toFixed(2)}" aria-label="Amount received" />
@@ -619,7 +618,7 @@ masterRouter.get('/master/reconciliation', async (req, res, next) => {
 
     res.send(masterPage({
       title: 'Reconciliation',
-      staff: req.staff,
+      admin: req.admin,
       active: '/master/reconciliation',
       flash: FLASH[req.query.done] || null,
       body: `
@@ -669,7 +668,7 @@ export function toPence(input) {
 
 const OFFLINE_METHODS = new Set(['cash', 'bank_transfer', 'card_terminal']);
 
-masterRouter.post('/master/invoices/:id/payments', requireStaffCsrf, async (req, res, next) => {
+masterRouter.post('/master/invoices/:id/payments', requireAdminCsrf, async (req, res, next) => {
   try {
     const amount = toPence(req.body.amount);
     const method = OFFLINE_METHODS.has(str(req.body.method, 20)) ? str(req.body.method, 20) : 'cash';
@@ -680,7 +679,7 @@ masterRouter.post('/master/invoices/:id/payments', requireStaffCsrf, async (req,
     if (!amount || amount <= 0) return res.redirect('/master/reconciliation?done=nothing');
 
     const result = await transaction(async (tx) => {
-      // Lock the invoice: two coaches must not both record the same cash.
+      // Lock the invoice: two admins must not both record the same cash.
       const invoice = await tx.one(
         'SELECT * FROM invoices WHERE id = $1 FOR UPDATE',
         [req.params.id]
@@ -698,7 +697,7 @@ masterRouter.post('/master/invoices/:id/payments', requireStaffCsrf, async (req,
                                reference, note, recorded_by, processed_at)
          VALUES ($1, $2, $3, 'succeeded', $4, $5, $6, $7, now())`,
         [invoice.id, invoice.member_id, amount, method, reference,
-         'Recorded by staff at the club', req.staff.staff_id]
+         'Recorded at the club by hand', req.admin.admin_id]
       );
 
       const paid = sums.paid + amount;
@@ -719,7 +718,7 @@ masterRouter.post('/master/invoices/:id/payments', requireStaffCsrf, async (req,
 
     if (!result) return res.redirect('/master/reconciliation?done=nothing');
 
-    await staffAudit(req, {
+    await adminAudit(req, {
       action: 'billing.payment_recorded',
       memberId: result.invoice.member_id,
       entity: 'invoice', entityId: result.invoice.id,
@@ -738,7 +737,7 @@ masterRouter.post('/master/invoices/:id/payments', requireStaffCsrf, async (req,
  * Reverse a payment. Admins only, and it writes a second row rather than
  * touching the first: the ledger stays append-only.
  */
-masterRouter.post('/master/payments/:id/reverse', requireStaffCsrf, requireAdmin, async (req, res, next) => {
+masterRouter.post('/master/payments/:id/reverse', requireAdminCsrf, async (req, res, next) => {
   try {
     const memberId = await transaction(async (tx) => {
       const payment = await tx.one(
@@ -753,7 +752,7 @@ masterRouter.post('/master/payments/:id/reverse', requireStaffCsrf, requireAdmin
                                reference, note, recorded_by, processed_at)
          VALUES ($1, $2, $3, 'refunded', $4, $5, $6, $7, now())`,
         [payment.invoice_id, payment.member_id, -payment.amount_pence, payment.method,
-         payment.reference, `Reversal of ${payment.id}`, req.staff.staff_id]
+         payment.reference, `Reversal of ${payment.id}`, req.admin.admin_id]
       );
 
       if (payment.invoice_id) {
@@ -768,7 +767,7 @@ masterRouter.post('/master/payments/:id/reverse', requireStaffCsrf, requireAdmin
 
     if (!memberId) return res.redirect('/master?done=nothing');
 
-    await staffAudit(req, {
+    await adminAudit(req, {
       action: 'billing.payment_reversed',
       memberId, entity: 'payment', entityId: req.params.id,
     });

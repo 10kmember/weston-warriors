@@ -1,10 +1,10 @@
 /**
- * Staff authentication.
+ * Admin authentication.
  *
  * Deliberately a parallel system to the member one rather than a role check on
  * top of it: separate table, separate sessions, separate cookie, separate sign
- * in page. A member's cookie is not a weaker staff cookie, it is a different
- * kind of thing, and no amount of tampering with a member row produces staff
+ * in page. A member's cookie is not a weaker admin cookie, it is a different
+ * kind of thing, and no amount of tampering with a member row produces admin
  * access.
  *
  * The mechanics (scrypt, HMAC'd tokens, CSRF bound to the session) are the same
@@ -16,37 +16,37 @@ import { config } from './config.js';
 import { query, one } from './db.js';
 import { hashPassword, verifyPassword, newToken, burnPasswordTime } from './auth.js';
 
-export const STAFF_COOKIE = 'ww_staff';
+export const ADMIN_COOKIE = 'ww_admin';
 const TTL_DAYS = 7;             // shorter than a member's 30: this is the till
 
-export { hashPassword as hashStaffPassword };
+export { hashPassword as hashAdminPassword };
 
 function hashToken(raw) {
-  // A distinct pepper, so a member token can never hash to a staff token even
+  // A distinct pepper, so a member token can never hash to an admin token even
   // if the raw values somehow collided.
-  return crypto.createHmac('sha256', `${config.sessionSecret}:staff`).update(raw).digest('hex');
+  return crypto.createHmac('sha256', `${config.sessionSecret}:admin`).update(raw).digest('hex');
 }
 
-export async function createStaffSession(staffId, { ip, userAgent }) {
+export async function createAdminSession(adminId, { ip, userAgent }) {
   const raw = newToken();
   const csrf = newToken(24);
   const expiresAt = new Date(Date.now() + TTL_DAYS * 86400_000);
 
   await query(
-    `INSERT INTO staff_sessions (staff_id, token_hash, csrf_token, ip, user_agent, expires_at)
+    `INSERT INTO admin_sessions (admin_id, token_hash, csrf_token, ip, user_agent, expires_at)
      VALUES ($1, $2, $3, $4, $5, $6)`,
-    [staffId, hashToken(raw), csrf, ip || null, userAgent || '', expiresAt]
+    [adminId, hashToken(raw), csrf, ip || null, userAgent || '', expiresAt]
   );
   return { raw, csrf, expiresAt };
 }
 
-export async function loadStaffSession(raw) {
+export async function loadAdminSession(raw) {
   if (!raw) return null;
   return one(
-    `SELECT s.id, s.staff_id, s.csrf_token,
-            u.email, u.name, u.role, u.status
-       FROM staff_sessions s
-       JOIN staff_users u ON u.id = s.staff_id
+    `SELECT s.id, s.admin_id, s.csrf_token,
+            u.email, u.name, u.status
+       FROM admin_sessions s
+       JOIN admins u ON u.id = s.admin_id
       WHERE s.token_hash = $1
         AND s.revoked_at IS NULL
         AND s.expires_at > now()
@@ -55,12 +55,12 @@ export async function loadStaffSession(raw) {
   );
 }
 
-export async function revokeStaffSession(id) {
-  await query('UPDATE staff_sessions SET revoked_at = now() WHERE id = $1', [id]);
+export async function revokeAdminSession(id) {
+  await query('UPDATE admin_sessions SET revoked_at = now() WHERE id = $1', [id]);
 }
 
-export function setStaffCookie(res, raw, expiresAt) {
-  res.cookie(STAFF_COOKIE, raw, {
+export function setAdminCookie(res, raw, expiresAt) {
+  res.cookie(ADMIN_COOKIE, raw, {
     httpOnly: true,
     sameSite: 'lax',
     secure: config.isProd,
@@ -70,19 +70,19 @@ export function setStaffCookie(res, raw, expiresAt) {
   });
 }
 
-export function clearStaffCookie(res) {
-  res.clearCookie(STAFF_COOKIE, { path: '/master' });
+export function clearAdminCookie(res) {
+  res.clearCookie(ADMIN_COOKIE, { path: '/master' });
 }
 
 /* ------------------------------------------------------------ middleware -- */
 
-export async function attachStaff(req, res, next) {
+export async function attachAdmin(req, res, next) {
   try {
-    const raw = req.cookies?.[STAFF_COOKIE];
-    const session = await loadStaffSession(raw);
+    const raw = req.cookies?.[ADMIN_COOKIE];
+    const session = await loadAdminSession(raw);
     if (session) {
-      req.staff = session;
-      query('UPDATE staff_sessions SET last_seen_at = now() WHERE id = $1', [session.id]).catch(() => {});
+      req.admin = session;
+      query('UPDATE admin_sessions SET last_seen_at = now() WHERE id = $1', [session.id]).catch(() => {});
     }
     next();
   } catch (err) {
@@ -90,35 +90,26 @@ export async function attachStaff(req, res, next) {
   }
 }
 
-export function requireStaff(req, res, next) {
-  if (!req.staff) {
+export function requireAdmin(req, res, next) {
+  if (!req.admin) {
     const target = encodeURIComponent(req.originalUrl);
     return res.redirect(`/master/signin?next=${target}`);
   }
   next();
 }
 
-export function requireStaffGuest(req, res, next) {
-  if (req.staff) return res.redirect('/master');
+export function requireAdminGuest(req, res, next) {
+  if (req.admin) return res.redirect('/master');
   next();
 }
 
-export function requireStaffCsrf(req, res, next) {
+export function requireAdminCsrf(req, res, next) {
   const supplied = req.body?._csrf || req.get('x-csrf-token');
-  const expected = req.staff?.csrf_token;
+  const expected = req.admin?.csrf_token;
   if (!expected || !supplied || supplied.length !== expected.length ||
       !crypto.timingSafeEqual(Buffer.from(supplied), Buffer.from(expected))) {
     res.status(403);
-    return next(new Error('Your staff session expired or the form was stale. Sign in again.'));
-  }
-  next();
-}
-
-/** Admin-only actions, such as reversing a payment somebody else recorded. */
-export function requireAdmin(req, res, next) {
-  if (req.staff?.role !== 'admin') {
-    res.status(403);
-    return next(new Error('That action needs an admin account.'));
+    return next(new Error('Your admin session expired or the form was stale. Sign in again.'));
   }
   next();
 }
@@ -129,7 +120,7 @@ const attempts = new Map();
 const WINDOW_MS = 15 * 60_000;
 const MAX_ATTEMPTS = 6;         // tighter than the member door
 
-export function throttleStaffLogin(req, res, next) {
+export function throttleAdminLogin(req, res, next) {
   const key = req.ip || 'unknown';
   const now = Date.now();
   const entry = attempts.get(key);
@@ -141,28 +132,28 @@ export function throttleStaffLogin(req, res, next) {
   next();
 }
 
-export function recordStaffFailure(req) {
+export function recordAdminFailure(req) {
   const entry = attempts.get(req.ip || 'unknown');
   if (entry) entry.count += 1;
 }
 
-export function clearStaffAttempts(req) {
+export function clearAdminAttempts(req) {
   attempts.delete(req.ip || 'unknown');
 }
 
 /* ----------------------------------------------------------------- audit -- */
 
-export async function staffAudit(req, { action, memberId = null, entity = '', entityId = '', metadata = {} }) {
+export async function adminAudit(req, { action, memberId = null, entity = '', entityId = '', metadata = {} }) {
   try {
     await query(
-      `INSERT INTO audit_log (member_id, staff_id, actor, action, entity, entity_id, metadata, ip, user_agent)
-       VALUES ($1, $2, 'staff', $3, $4, $5, $6, $7, $8)`,
-      [memberId, req.staff?.staff_id || null, action, entity, String(entityId || ''),
+      `INSERT INTO audit_log (member_id, admin_id, actor, action, entity, entity_id, metadata, ip, user_agent)
+       VALUES ($1, $2, 'admin', $3, $4, $5, $6, $7, $8)`,
+      [memberId, req.admin?.admin_id || null, action, entity, String(entityId || ''),
        metadata, req.ip || null, req.get('user-agent') || '']
     );
   } catch (err) {
-    console.error('[audit] staff action not recorded', action, err.message);
+    console.error('[audit] admin action not recorded', action, err.message);
   }
 }
 
-export { verifyPassword as verifyStaffPassword, burnPasswordTime };
+export { verifyPassword as verifyAdminPassword, burnPasswordTime };

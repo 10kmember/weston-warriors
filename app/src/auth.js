@@ -80,7 +80,7 @@ export async function loadSession(raw) {
   if (!raw) return null;
   return one(
     `SELECT s.id, s.member_id, s.csrf_token, s.expires_at,
-            m.email, m.first_name, m.last_name, m.status, m.role, m.avatar_key,
+            m.email, m.first_name, m.last_name, m.status, m.avatar_key,
             m.erasure_requested_at, m.erasure_due_at
        FROM sessions s
        JOIN members m ON m.id = s.member_id

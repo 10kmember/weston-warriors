@@ -1,5 +1,5 @@
 /**
- * Pricing, from the staff side.
+ * Pricing, from the club's side.
  *
  * The rule that makes the rest of this file make sense: a plan holds the price
  * we sell at today, a subscription holds the price a member was signed up at.
@@ -7,15 +7,12 @@
  * change says, in the same form, whether it applies to new members only or to
  * everybody, and the answer is written down with their name on it.
  *
- * Editing is admin only, the same bar as reversing a payment. A coach can see
- * every number here and change none of them.
- *
- * These routes are registered onto the master router *after* its staff guard,
+ * These routes are registered onto the master router *after* its admin guard,
  * so they inherit it rather than declaring their own.
  */
 
 import { query, one, transaction } from '../db.js';
-import { requireStaffCsrf, requireAdmin, staffAudit } from '../staff-auth.js';
+import { requireAdminCsrf, requireAdmin, adminAudit } from '../admin-auth.js';
 import { str } from '../validate.js';
 import { masterPage } from '../views/master-layout.js';
 import { esc, money, shortDate, card, csrf, empty } from '../views/layout.js';
@@ -39,8 +36,6 @@ export function registerPricingRoutes(router) {
 
   router.get('/master/plans', async (req, res, next) => {
     try {
-      const admin = req.staff.role === 'admin';
-
       const [plans, legacy, history] = await Promise.all([
         query('SELECT * FROM plan_rollup ORDER BY is_active DESC, sort_order, list_price_pence'),
         query(`
@@ -55,10 +50,10 @@ export function registerPricingRoutes(router) {
              AND m.status <> 'erased'
            ORDER BY p.sort_order, s.price_pence`),
         query(`
-          SELECT c.*, st.name AS staff_name, p.name AS plan_name
+          SELECT c.*, st.name AS admin_name, p.name AS plan_name
             FROM plan_price_changes c
             JOIN plans p ON p.id = c.plan_id
-            LEFT JOIN staff_users st ON st.id = c.staff_id
+            LEFT JOIN admins st ON st.id = c.admin_id
            ORDER BY c.created_at DESC
            LIMIT 40`),
       ]);
@@ -116,14 +111,13 @@ export function registerPricingRoutes(router) {
                 <small class="mono muted">PAYING ${esc(money(h.price_pence))} <s>·</s> LIST ${esc(money(h.list_price_pence))}</small>
               </span>
             </span>
-            ${admin ? `
             <form method="post" action="/master/members/${esc(h.member_id)}/price" class="inline">
-              ${csrf(req.staff.csrf_token)}
+              ${csrf(req.admin.csrf_token)}
               <input type="hidden" name="price" value="${(h.list_price_pence / 100).toFixed(2)}" />
               <input type="hidden" name="reason" value="Moved to the current list price" />
               <input type="hidden" name="back" value="/master/plans" />
               <button class="btn btn--sm" type="submit">Move to list</button>
-            </form>` : ''}
+            </form>
           </li>`).join('');
 
         const pastRows = past.map((h) => `
@@ -133,7 +127,7 @@ export function registerPricingRoutes(router) {
             <span class="muted">${h.applied_to === 'everyone'
               ? `EVERYONE <s>·</s> ${h.subscribers_repriced} REPRICED`
               : 'NEW MEMBERS ONLY'}</span>
-            <span class="muted">${esc(h.staff_name || 'unknown')}</span>
+            <span class="muted">${esc(h.admin_name || 'unknown')}</span>
             ${h.note ? `<span class="muted">${esc(h.note)}</span>` : ''}
           </li>`).join('');
 
@@ -165,11 +159,10 @@ export function registerPricingRoutes(router) {
             <ul class="histlist">${pastRows}</ul>
           </details>` : ''}
 
-          ${admin ? `
           <details class="drop drop--edit">
             <summary class="mono">EDIT THIS PLAN</summary>
             <form method="post" action="/master/plans/${esc(r.plan_id)}" class="planform">
-              ${csrf(req.staff.csrf_token)}
+              ${csrf(req.admin.csrf_token)}
               <div class="f">
                 <label class="f__label mono" for="n-${esc(r.plan_id)}">NAME</label>
                 <input class="f__input" id="n-${esc(r.plan_id)}" name="name" type="text"
@@ -228,13 +221,13 @@ export function registerPricingRoutes(router) {
                 <button class="btn btn--solid" type="submit">Save plan</button>
               </div>
             </form>
-          </details>` : ''}
+          </details>
         </section>`;
       }).join('');
 
-      const creator = admin ? card('Add a plan', `
+      const creator = card('Add a plan', `
         <form method="post" action="/master/plans" class="planform">
-          ${csrf(req.staff.csrf_token)}
+          ${csrf(req.admin.csrf_token)}
           <div class="f">
             <label class="f__label mono" for="new-name">NAME</label>
             <input class="f__input" id="new-name" name="name" type="text" placeholder="Juniors" required />
@@ -252,11 +245,11 @@ export function registerPricingRoutes(router) {
           <div class="planform__go">
             <button class="btn btn--solid" type="submit">Create plan</button>
           </div>
-        </form>`) : '';
+        </form>`);
 
       res.send(masterPage({
         title: 'Pricing',
-        staff: req.staff,
+        admin: req.admin,
         active: '/master/plans',
         flash: pricingFlash(req.query),
         body: `
@@ -270,11 +263,6 @@ export function registerPricingRoutes(router) {
             rate stays visible instead of living in somebody's memory.
           </p>
         </header>
-
-        ${admin ? '' : `
-        <div class="banner banner--warn">
-          Pricing is admin only. You can see every number on this page and change none of it.
-        </div>`}
 
         <div class="tiles">
           <div class="tile">
@@ -307,7 +295,7 @@ export function registerPricingRoutes(router) {
 
   /* ------------------------------------------------------------ edit plan -- */
 
-  router.post('/master/plans/:id', requireStaffCsrf, requireAdmin, async (req, res, next) => {
+  router.post('/master/plans/:id', requireAdminCsrf, requireAdmin, async (req, res, next) => {
     try {
       const price = toPence(req.body.price);
       if (price === null) return res.redirect('/master/plans?done=badprice');
@@ -354,11 +342,11 @@ export function registerPricingRoutes(router) {
 
         if (moved) {
           await tx.query(
-            `INSERT INTO plan_price_changes (plan_id, staff_id, old_price_pence,
+            `INSERT INTO plan_price_changes (plan_id, admin_id, old_price_pence,
                                              new_price_pence, applied_to,
                                              subscribers_repriced, note)
              VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-            [plan.id, req.staff.staff_id, wasPrice, price, applied, repriced.length, note]
+            [plan.id, req.admin.admin_id, wasPrice, price, applied, repriced.length, note]
           );
         }
 
@@ -367,7 +355,7 @@ export function registerPricingRoutes(router) {
 
       if (!result) return res.redirect('/master/plans?done=badplan');
 
-      await staffAudit(req, {
+      await adminAudit(req, {
         action: result.moved ? 'plan.repriced' : 'plan.updated',
         entity: 'plan', entityId: result.plan.id,
         metadata: {
@@ -389,7 +377,7 @@ export function registerPricingRoutes(router) {
 
   /* ---------------------------------------------------------- create plan -- */
 
-  router.post('/master/plans', requireStaffCsrf, requireAdmin, async (req, res, next) => {
+  router.post('/master/plans', requireAdminCsrf, requireAdmin, async (req, res, next) => {
     try {
       const name = str(req.body.name, 60);
       const price = toPence(req.body.price);
@@ -412,7 +400,7 @@ export function registerPricingRoutes(router) {
          JSON.stringify(featureList(req.body.features)), order.next]
       );
 
-      await staffAudit(req, {
+      await adminAudit(req, {
         action: 'plan.created', entity: 'plan', entityId: plan.id,
         metadata: { plan: code, name, price_pence: price },
       });
@@ -429,7 +417,7 @@ export function registerPricingRoutes(router) {
    * does this constantly and it usually lives in somebody's head; here it is a
    * column with a reason attached to it.
    */
-  router.post('/master/members/:id/price', requireStaffCsrf, requireAdmin, async (req, res, next) => {
+  router.post('/master/members/:id/price', requireAdminCsrf, requireAdmin, async (req, res, next) => {
     try {
       const price = toPence(req.body.price);
       const memberId = req.params.id;
@@ -447,7 +435,7 @@ export function registerPricingRoutes(router) {
       );
       if (!sub) return res.redirect(`${back}?done=nosub`);
 
-      await staffAudit(req, {
+      await adminAudit(req, {
         action: 'subscription.repriced', memberId,
         entity: 'subscription', entityId: sub.id,
         metadata: { price_pence: price, reason },

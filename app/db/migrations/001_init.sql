@@ -15,8 +15,6 @@
 --  * Card numbers are never stored. `payment_methods` holds a provider token
 --    plus the display fragments a processor gives you back.
 
-BEGIN;
-
 CREATE TABLE schema_migrations (
   version     text PRIMARY KEY,
   applied_at  timestamptz NOT NULL DEFAULT now()
@@ -292,7 +290,3 @@ CREATE TABLE bookings (
 );
 
 CREATE INDEX bookings_member_idx ON bookings (member_id, booked_at DESC);
-
-INSERT INTO schema_migrations (version) VALUES ('001_init');
-
-COMMIT;

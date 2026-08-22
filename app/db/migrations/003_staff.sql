@@ -6,8 +6,6 @@
 -- to the till: there is no flag to flip. The two sign in pages are different
 -- pages backed by different tables.
 
-BEGIN;
-
 CREATE TABLE staff_users (
   id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   email               text NOT NULL,
@@ -80,7 +78,3 @@ LEFT JOIN (
    WHERE status = 'succeeded'
    GROUP BY invoice_id
 ) p ON p.invoice_id = i.id;
-
-INSERT INTO schema_migrations (version) VALUES ('003_staff');
-
-COMMIT;

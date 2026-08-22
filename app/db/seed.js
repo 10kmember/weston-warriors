@@ -19,12 +19,12 @@ const daysAhead = (n) => new Date(Date.now() + n * DAY);
 /** The one password for every seeded member. Development only. */
 const TEST_PASSWORD = 'WarriorsTest2026';
 
-/** Staff sign in separately, at /master/signin, with their own password. */
-const STAFF_PASSWORD = 'MasterFloor2026';
+/** Admins sign in separately, at /master/signin, with their own password. */
+const ADMIN_PASSWORD = 'MasterFloor2026';
 
-const STAFF = [
-  { email: 'dean@westonwarriors.example', name: 'Dean Lewis', role: 'admin' },
-  { email: 'simon@westonwarriors.example', name: 'Simon Flett', role: 'coach' },
+const ADMINS = [
+  { email: 'dean@westonwarriors.example', name: 'Dean Lewis' },
+  { email: 'simon@westonwarriors.example', name: 'Simon Flett' },
 ];
 
 const PLANS = [
@@ -94,7 +94,7 @@ async function seed() {
   await query(`TRUNCATE bookings, class_sessions, audit_log, data_requests, consents,
                         payments, payment_methods, invoice_lines, invoices,
                         subscriptions, sessions, members, plans,
-                        staff_sessions, staff_users RESTART IDENTITY CASCADE`);
+                        admin_sessions, admins RESTART IDENTITY CASCADE`);
 
   /* plans */
   const planIds = {};
@@ -123,13 +123,13 @@ async function seed() {
     classIds.push({ ...row, past: offset < 0 });
   }
 
-  /* staff: the master dashboard has its own accounts and its own sign in page */
-  const staffHash = hashPassword(STAFF_PASSWORD);
-  for (const st of STAFF) {
+  /* admins: the master dashboard has its own accounts and its own sign in page */
+  const adminHash = hashPassword(ADMIN_PASSWORD);
+  for (const a of ADMINS) {
     await query(
-      `INSERT INTO staff_users (email, password_hash, name, role, last_login_at, created_at)
-       VALUES ($1,$2,$3,$4,$5,$6)`,
-      [st.email, staffHash, st.name, st.role, daysAgo(1), daysAgo(400)]
+      `INSERT INTO admins (email, password_hash, name, last_login_at, created_at)
+       VALUES ($1,$2,$3,$4,$5)`,
+      [a.email, adminHash, a.name, daysAgo(1), daysAgo(400)]
     );
   }
 
@@ -262,12 +262,12 @@ async function seed() {
     console.log(`              ${m.plan} membership, ${m.status.replace('_', ' ')}`);
     console.log('');
   }
-  console.log('  STAFF        sign in at /master/signin  (a different door)');
+  console.log('  ADMINS       sign in at /master/signin  (a different door)');
   console.log('');
-  for (const st of STAFF) {
-    console.log(`    email:    ${st.email}`);
-    console.log(`    password: ${STAFF_PASSWORD}`);
-    console.log(`              ${st.name}, ${st.role}`);
+  for (const a of ADMINS) {
+    console.log(`    email:    ${a.email}`);
+    console.log(`    password: ${ADMIN_PASSWORD}`);
+    console.log(`              ${a.name}`);
     console.log('');
   }
 }
