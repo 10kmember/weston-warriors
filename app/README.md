@@ -46,6 +46,38 @@ The seed is deterministic and small on purpose: enough to populate every screen
 and to show the two states worth looking at, without rows you have to scroll
 past to reach the one you care about.
 
+### The master dashboard
+
+Staff have their own area at **`/master`**, behind **its own sign in page** at
+`/master/signin`. It is not the member sign in page with a role check bolted on:
+staff are a separate table with separate sessions and a cookie scoped to
+`/master`, so a member's browser never even sends a credential there. A member
+session that navigates to `/master` is bounced to the staff door.
+
+| Email | Password | Role |
+| --- | --- | --- |
+| `dean@westonwarriors.example` | `MasterFloor2026` | admin |
+| `simon@westonwarriors.example` | `MasterFloor2026` | coach |
+
+It answers what a club asks on a Monday morning:
+
+- **How many participants**, how many are on a membership, how many joined this month
+- **How many are square with us**, as a count and a percentage
+- **Who is in shortfall**, what they owe, how overdue, worst case first
+- **What was taken** in the last 30 days, and how much of it came off the card rails
+- **Reconciliation**: put last night's cash, a bank transfer or a terminal
+  receipt against the invoice it belongs to, in one line per invoice with the
+  outstanding amount pre-filled
+
+Reconciliation is append-only. Recording a payment writes a row stamped with the
+member of staff who took it. Correcting a mistake writes a **reversal** rather
+than editing or deleting the original, and reversals are admin only. Clearing
+an invoice in full also lifts the membership back out of `past_due`.
+
+Staff can read a participant's record but cannot edit their personal details.
+Rectification is the member's own right under Article 16 and stays on their
+profile.
+
 ### Avatars
 
 Members pick from ten faces and cannot upload anything. That is a product
@@ -72,6 +104,9 @@ src/routes/auth.js       sign up, sign in, sign out
 src/routes/dashboard.js  overview, class timetable and booking
 src/routes/account.js    membership, billing, invoices, profile
 src/routes/privacy.js    consent, export, erasure, security
+src/routes/master.js     staff dashboard: counts, shortfall, reconciliation
+src/staff-auth.js        staff sessions, separate from members entirely
+src/views/master-layout.js  the staff shell and its own sign in page
 db/migrations/       schema
 db/seed.js           test data
 test/                unit tests
@@ -96,6 +131,10 @@ test/                unit tests
 - **Card numbers** are never accepted or stored. `payment_methods` holds a
   processor token and the display fragments a processor hands back.
 - **Login throttling** per IP, plus a per-account lockout after eight failures.
+- **Staff are a separate system**, not a role column: separate table, separate
+  sessions, separate cookie scoped to `/master`, a tighter lockout after five
+  failures and a seven day session instead of thirty. There is no flag on a
+  member row that could be flipped to gain staff access.
 
 Not done, and worth doing before real members use it: email verification and
 password reset (both need a mail provider), a real payment processor, and

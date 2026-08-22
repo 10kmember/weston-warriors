@@ -16,8 +16,16 @@ const DAY = 86400_000;
 const daysAgo = (n) => new Date(Date.now() - n * DAY);
 const daysAhead = (n) => new Date(Date.now() + n * DAY);
 
-/** The one password for every seeded account. Development only. */
+/** The one password for every seeded member. Development only. */
 const TEST_PASSWORD = 'WarriorsTest2026';
+
+/** Staff sign in separately, at /master/signin, with their own password. */
+const STAFF_PASSWORD = 'MasterFloor2026';
+
+const STAFF = [
+  { email: 'dean@westonwarriors.example', name: 'Dean Lewis', role: 'admin' },
+  { email: 'simon@westonwarriors.example', name: 'Simon Flett', role: 'coach' },
+];
 
 const PLANS = [
   {
@@ -85,7 +93,8 @@ async function seed() {
   console.log('[seed] clearing');
   await query(`TRUNCATE bookings, class_sessions, audit_log, data_requests, consents,
                         payments, payment_methods, invoice_lines, invoices,
-                        subscriptions, sessions, members, plans RESTART IDENTITY CASCADE`);
+                        subscriptions, sessions, members, plans,
+                        staff_sessions, staff_users RESTART IDENTITY CASCADE`);
 
   /* plans */
   const planIds = {};
@@ -112,6 +121,16 @@ async function seed() {
        starts, new Date(starts.getTime() + mins * 60_000), capacity]
     );
     classIds.push({ ...row, past: offset < 0 });
+  }
+
+  /* staff: the master dashboard has its own accounts and its own sign in page */
+  const staffHash = hashPassword(STAFF_PASSWORD);
+  for (const st of STAFF) {
+    await query(
+      `INSERT INTO staff_users (email, password_hash, name, role, last_login_at, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6)`,
+      [st.email, staffHash, st.name, st.role, daysAgo(1), daysAgo(400)]
+    );
   }
 
   /* members */
@@ -233,12 +252,20 @@ async function seed() {
 
   console.log('[seed] done:', counts);
   console.log('');
-  console.log('  Sign in at /signin with:');
+  console.log('  MEMBERS      sign in at /signin');
   console.log('');
   for (const m of MEMBERS) {
     console.log(`    email:    ${m.email}`);
     console.log(`    password: ${TEST_PASSWORD}`);
     console.log(`              ${m.plan} membership, ${m.status.replace('_', ' ')}`);
+    console.log('');
+  }
+  console.log('  STAFF        sign in at /master/signin  (a different door)');
+  console.log('');
+  for (const st of STAFF) {
+    console.log(`    email:    ${st.email}`);
+    console.log(`    password: ${STAFF_PASSWORD}`);
+    console.log(`              ${st.name}, ${st.role}`);
     console.log('');
   }
 }

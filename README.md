@@ -40,6 +40,14 @@ The platform serves the marketing site too, so running `npm start` in `app/`
 gives you both on one origin and the session cookie works across them. The
 sign in control lives in the site's hamburger menu at every screen size.
 
+There are three doors:
+
+| Path | Who | Sign in at |
+| --- | --- | --- |
+| `/` | anyone | no account needed |
+| `/dashboard` | members | `/signin` |
+| `/master` | staff | `/master/signin`, a separate page and a separate table |
+
 ## Structure
 
 ```

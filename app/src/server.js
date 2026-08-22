@@ -18,8 +18,10 @@ import { authRouter } from './routes/auth.js';
 import { dashboardRouter } from './routes/dashboard.js';
 import { accountRouter } from './routes/account.js';
 import { privacyRouter } from './routes/privacy.js';
+import { masterRouter } from './routes/master.js';
 import { runErasureSweep } from './erasure.js';
 import { page, esc } from './views/layout.js';
+import { masterSigninPage } from './views/master-layout.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, '..', config.staticRoot);
@@ -93,6 +95,7 @@ app.get('/internal/erasure-sweep', async (req, res) => {
   }
 });
 
+app.use(masterRouter);
 app.use(authRouter);
 app.use(dashboardRouter);
 app.use(accountRouter);
@@ -133,6 +136,15 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {  // eslint-disable-line no-unused-vars
   const status = res.statusCode >= 400 ? res.statusCode : 500;
   if (status >= 500) console.error('[error]', err);
+
+  // Staff pages get the staff shell, and never leak a member's name into it.
+  if (req.path.startsWith('/master')) {
+    return res.status(status).send(masterSigninPage({
+      error: status >= 500
+        ? 'Something failed at our end. It has been logged.'
+        : (err.message || 'That request could not be completed.'),
+    }));
+  }
 
   res.status(status).send(page({
     title: 'Something went wrong',

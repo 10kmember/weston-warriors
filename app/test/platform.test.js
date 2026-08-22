@@ -185,5 +185,51 @@ test('every avatar in the manifest has a file on disk', async () => {
   }
 });
 
+/* ---------------------------------------------------- master dashboard -- */
+
+test('money parsing refuses anything that is not money', async () => {
+  const { toPence } = await import('../src/routes/master.js');
+
+  assert.equal(toPence('65'), 6500);
+  assert.equal(toPence('65.00'), 6500);
+  assert.equal(toPence('12.50'), 1250);
+  assert.equal(toPence('£12.50'), 1250);
+  assert.equal(toPence('1,250.00'), 125000);
+  assert.equal(toPence(' 65.00 '), 6500);
+  assert.equal(toPence('0.01'), 1);
+
+  for (const bad of ['', 'abc', '12.345', '-5', '1e3', '12..5', null, undefined, '65p']) {
+    assert.equal(toPence(bad), null, String(bad));
+  }
+});
+
+test('staff and member sessions are separate systems', async () => {
+  const { loadStaffSession, createStaffSession } = await import('../src/staff-auth.js');
+  const { loadSession, createSession } = await import('../src/auth.js');
+
+  const staff = await one(
+    `INSERT INTO staff_users (email, password_hash, name, role)
+     VALUES ($1, 'x', 'Test Staff', 'coach') RETURNING id`,
+    [`staff-test-${Date.now()}@example.com`]
+  );
+  const member = await one(
+    `INSERT INTO members (email, password_hash, first_name)
+     VALUES ($1, 'x', 'Test') RETURNING id`,
+    [`member-test-${Date.now()}@example.com`]
+  );
+
+  const staffSession = await createStaffSession(staff.id, { ip: null, userAgent: '' });
+  const memberSession = await createSession(member.id, { ip: null, userAgent: '' });
+
+  // each token works only in its own system
+  assert.ok(await loadStaffSession(staffSession.raw), 'staff token should open a staff session');
+  assert.equal(await loadSession(staffSession.raw), null, 'a staff token must not be a member session');
+  assert.ok(await loadSession(memberSession.raw), 'member token should open a member session');
+  assert.equal(await loadStaffSession(memberSession.raw), null, 'a member token must not be a staff session');
+
+  await query('DELETE FROM staff_users WHERE id = $1', [staff.id]);
+  await query('DELETE FROM members WHERE id = $1', [member.id]);
+});
+
 // Closes the pool once every test above has run.
 test.after(async () => { await pool.end(); });
