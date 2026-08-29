@@ -4,7 +4,7 @@
 Contact: https://princey.netlify.app
 Expires: 2027-08-15T00:00:00.000Z
 Preferred-Languages: en
-Canonical: https://glaskmedisyn.github.io/Ava/.well-known/security.txt
+Canonical: https://weston-warriors.vercel.app/.well-known/security.txt
 
 # This is a static site. It stores nothing, sets no cookies, and runs no
 # server-side code. The enquiry form validates in the browser and posts

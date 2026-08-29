@@ -26,11 +26,11 @@ scene renders a sparring round between two particle figures.
 
 ## Sections
 
-- [01 The Arena](https://glaskmedisyn.github.io/Ava/#arena): the building, the coaching staff, how the floor runs
-- [02 Triumphs](https://glaskmedisyn.github.io/Ava/#triumphs): Tiah-Mai Ayton's record and the wider roster
-- [03 The Code](https://glaskmedisyn.github.io/Ava/#code): five tenets every member is read once
-- [04 The Exchange](https://glaskmedisyn.github.io/Ava/#ground): a sparring round rendered from particles
-- [05 The Summons](https://glaskmedisyn.github.io/Ava/#summons): membership tiers and how to request an assessment
+- [01 The Arena](https://weston-warriors.vercel.app/#arena): the building, the coaching staff, how the floor runs
+- [02 Triumphs](https://weston-warriors.vercel.app/#triumphs): Tiah-Mai Ayton's record and the wider roster
+- [03 The Code](https://weston-warriors.vercel.app/#code): five tenets every member is read once
+- [04 The Exchange](https://weston-warriors.vercel.app/#ground): a sparring round rendered from particles
+- [05 The Summons](https://weston-warriors.vercel.app/#summons): membership tiers and how to request an assessment
 
 ## Technical
 

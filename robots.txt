@@ -5,7 +5,7 @@ User-agent: *
 Allow: /
 Disallow: /.well-known/security.txt
 
-Sitemap: https://glaskmedisyn.github.io/Ava/sitemap.xml
+Sitemap: https://weston-warriors.vercel.app/sitemap.xml
 
 # Machine-readable summary for language models
-# See: https://glaskmedisyn.github.io/Ava/llms.txt
+# See: https://weston-warriors.vercel.app/llms.txt
